@@ -93,8 +93,8 @@ function formatDate(iso: string) {
 }
 
 // Indian-style comma grouping: xx,xx,xxx (last group 3 digits, rest groups of 2)
-function formatRupees(n: number): string {
-  const rounded = Math.round(n);
+function formatRupees(n: unknown): string {
+  const rounded = Math.round(Number(n));
   if (isNaN(rounded)) return "₹0";
   const s = rounded.toString();
   if (s.length <= 3) return `₹${s}`;

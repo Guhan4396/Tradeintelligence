@@ -170,19 +170,36 @@ async function callClaude(prompt: string, apiKey: string): Promise<string> {
   return data.content[0].text as string;
 }
 
+// Parse any monetary value the model might return to a plain integer rupees.
+// Handles: numbers, strings with ₹/commas, "X lakh", "X crore".
+function parseToRupees(v: unknown): number {
+  if (typeof v === "number") return Math.round(v);
+  if (typeof v !== "string") return 0;
+  const s = v.toLowerCase().replace(/[₹,\s]/g, "");
+  const lakhMatch = s.match(/^([\d.]+)\s*lakh/);
+  if (lakhMatch) return Math.round(parseFloat(lakhMatch[1]) * 100_000);
+  const croreMatch = s.match(/^([\d.]+)\s*crore/);
+  if (croreMatch) return Math.round(parseFloat(croreMatch[1]) * 1_00_00_000);
+  const plain = parseFloat(s);
+  return isNaN(plain) ? 0 : Math.round(plain);
+}
+
 function enforceHealthArithmetic(data: HealthResultRaw): HealthResultRaw {
   if (!Array.isArray(data.exports)) return data;
 
   let runningTotal = 0;
   for (const exp of data.exports) {
+    // Normalise all monetary fields to integers
+    exp.amountExported = parseToRupees(exp.amountExported);
+    exp.tariffPaid = parseToRupees(exp.tariffPaid);
+
     if (Array.isArray(exp.savingsBreakdown) && exp.savingsBreakdown.length > 0) {
-      const computed = exp.savingsBreakdown.reduce(
-        (sum, item) => sum + (Number(item.amount) || 0),
-        0
-      );
-      exp.potentialSaving = computed;
+      for (const item of exp.savingsBreakdown) {
+        item.amount = parseToRupees(item.amount);
+      }
+      exp.potentialSaving = exp.savingsBreakdown.reduce((sum, item) => sum + item.amount, 0);
     } else {
-      exp.potentialSaving = Number(exp.potentialSaving) || 0;
+      exp.potentialSaving = parseToRupees(exp.potentialSaving);
     }
     runningTotal += exp.potentialSaving;
   }

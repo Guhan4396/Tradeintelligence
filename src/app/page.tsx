@@ -435,7 +435,7 @@ function HealthCheck({
 
 // ── Feature 2 & 3: Weekly Digest (fixed + date-aware) ────────────────────
 
-function WeeklyDigest({ company, productRows, exportRows }: { company: string; productRows: ProductRow[]; exportRows: ExportRow[] }) {
+function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { company: string; productRows: ProductRow[]; setProductRows: (p: ProductRow[]) => void; exportRows: ExportRow[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
@@ -541,21 +541,7 @@ function WeeklyDigest({ company, productRows, exportRows }: { company: string; p
         </div>
       )}
 
-      {/* Products read-only */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={sLabel}>Products &amp; HSN Codes</label>
-        {!hasProducts ? (
-          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Add products in the Health Check tab first.</p>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {productRows.filter((r) => r.name.trim()).map((r) => (
-              <span key={r.id} style={{ fontSize: 12, backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`, borderRadius: 20, padding: "4px 12px", color: C.inkMid }}>
-                {r.name}{r.hsn ? ` · ${r.hsn}` : ""}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductRowsInput rows={productRows} onChange={setProductRows} />
 
       <form onSubmit={handleSubmit}>
         <button type="submit" disabled={!canSubmit} style={sSubmitBtn(!canSubmit)}>
@@ -731,7 +717,7 @@ export default function Home() {
           />
         )}
         {tab === "digest" && (
-          <WeeklyDigest company={company} productRows={productRows} exportRows={exportRows} />
+          <WeeklyDigest company={company} productRows={productRows} setProductRows={setProductRows} exportRows={exportRows} />
         )}
         {tab === "shipment" && <ShipmentCheck />}
       </main>

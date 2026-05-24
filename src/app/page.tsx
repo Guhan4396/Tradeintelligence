@@ -2,28 +2,53 @@
 
 import { useState } from "react";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────
 
-type Finding = {
-  type: string;
-  title: string;
-  detail: string;
-  impact: string;
+const TEXTILE_PRODUCTS = [
+  "Cotton T-shirts", "Cotton Yarn", "Knitwear", "Woven Fabric",
+  "Synthetic Fabric", "Readymade Garments", "Home Textiles", "Denim",
+  "Technical Textiles", "Woollen Garments", "Silk Fabric", "Embroidery",
+];
+
+const MARKETS = [
+  "USA", "UK", "Germany", "France", "Italy", "UAE", "Netherlands",
+  "Belgium", "Spain", "Australia", "Canada", "Japan", "Saudi Arabia",
+  "Bangladesh", "Vietnam", "South Korea", "Singapore", "Turkey",
+];
+
+// ── Types ─────────────────────────────────────────────────────────────────
+
+type ExportRow = {
+  id: string;
+  country: string;
+  amount: string;
+  tariffPaid: string;
+  date: string;
+};
+
+type HealthExport = {
+  country: string;
+  date: string;
+  amountExported: string;
+  tariffPaid: string;
+  potentialSaving: string;
+  loophole: string;
+  fix: string;
 };
 
 type HealthCheckResult = {
-  money_left: string;
-  findings: Finding[];
+  totalSavings: number;
+  exports: HealthExport[];
+  additionalFindings: string[];
 };
 
 type DigestItem = {
-  headline: string;
+  title: string;
   detail: string;
-  action: string;
+  country: string;
 };
 
 type DigestResult = {
-  week: string;
   urgent: DigestItem[];
   watch: DigestItem[];
   opportunities: DigestItem[];
@@ -39,435 +64,13 @@ type ShipmentResult = {
   money_tip: string;
 };
 
-type Profile = {
-  company: string;
-  products: string;
-  markets: string;
-};
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-// ── Styles ────────────────────────────────────────────────────────────────
+function newRow(): ExportRow {
+  return { id: Math.random().toString(36).slice(2), country: "", amount: "", tariffPaid: "", date: "" };
+}
 
-const s = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#0f1117",
-    color: "#e8eaf0",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    fontSize: "15px",
-    lineHeight: "1.6",
-  } as React.CSSProperties,
-
-  header: {
-    backgroundColor: "#161a24",
-    borderBottom: "1px solid #1e2535",
-    padding: "0 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: "64px",
-  } as React.CSSProperties,
-
-  logo: {
-    fontSize: "20px",
-    fontWeight: 700,
-    color: "#ffffff",
-    letterSpacing: "-0.3px",
-  } as React.CSSProperties,
-
-  logoAccent: {
-    color: "#3b82f6",
-  } as React.CSSProperties,
-
-  tagline: {
-    fontSize: "13px",
-    color: "#6b7280",
-  } as React.CSSProperties,
-
-  hero: {
-    textAlign: "center" as const,
-    padding: "64px 24px 48px",
-    maxWidth: "680px",
-    margin: "0 auto",
-  },
-
-  heroTitle: {
-    fontSize: "36px",
-    fontWeight: 700,
-    color: "#ffffff",
-    marginBottom: "16px",
-    lineHeight: "1.2",
-    letterSpacing: "-0.5px",
-  } as React.CSSProperties,
-
-  heroSub: {
-    fontSize: "17px",
-    color: "#9ca3af",
-    maxWidth: "520px",
-    margin: "0 auto 24px",
-  } as React.CSSProperties,
-
-  badge: {
-    display: "inline-block",
-    backgroundColor: "#1e3a5f",
-    color: "#60a5fa",
-    border: "1px solid #2563eb33",
-    borderRadius: "20px",
-    padding: "5px 14px",
-    fontSize: "12px",
-    fontWeight: 600,
-    letterSpacing: "0.3px",
-    marginBottom: "24px",
-  } as React.CSSProperties,
-
-  main: {
-    maxWidth: "900px",
-    margin: "0 auto",
-    padding: "0 24px 80px",
-  } as React.CSSProperties,
-
-  tabs: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "32px",
-    backgroundColor: "#161a24",
-    padding: "6px",
-    borderRadius: "12px",
-    border: "1px solid #1e2535",
-  } as React.CSSProperties,
-
-  tab: (active: boolean): React.CSSProperties => ({
-    flex: 1,
-    padding: "10px 16px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: 600,
-    transition: "all 0.15s",
-    backgroundColor: active ? "#2563eb" : "transparent",
-    color: active ? "#ffffff" : "#6b7280",
-  }),
-
-  card: {
-    backgroundColor: "#161a24",
-    border: "1px solid #1e2535",
-    borderRadius: "16px",
-    padding: "32px",
-  } as React.CSSProperties,
-
-  sectionTitle: {
-    fontSize: "20px",
-    fontWeight: 700,
-    color: "#ffffff",
-    marginBottom: "8px",
-  } as React.CSSProperties,
-
-  sectionSub: {
-    fontSize: "14px",
-    color: "#6b7280",
-    marginBottom: "24px",
-  } as React.CSSProperties,
-
-  fieldGroup: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-    marginBottom: "16px",
-  } as React.CSSProperties,
-
-  fieldFull: {
-    marginBottom: "16px",
-  } as React.CSSProperties,
-
-  label: {
-    display: "block",
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "#9ca3af",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.5px",
-    marginBottom: "8px",
-  } as React.CSSProperties,
-
-  input: {
-    width: "100%",
-    backgroundColor: "#0f1117",
-    border: "1px solid #2a3142",
-    borderRadius: "8px",
-    padding: "10px 14px",
-    fontSize: "14px",
-    color: "#e8eaf0",
-    outline: "none",
-    boxSizing: "border-box" as const,
-    transition: "border-color 0.15s",
-  } as React.CSSProperties,
-
-  btn: {
-    width: "100%",
-    backgroundColor: "#2563eb",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "10px",
-    padding: "14px 24px",
-    fontSize: "15px",
-    fontWeight: 700,
-    cursor: "pointer",
-    marginTop: "8px",
-    transition: "background-color 0.15s",
-  } as React.CSSProperties,
-
-  btnDisabled: {
-    backgroundColor: "#1e2535",
-    color: "#6b7280",
-    cursor: "not-allowed",
-  } as React.CSSProperties,
-
-  resultBox: {
-    marginTop: "28px",
-    borderTop: "1px solid #1e2535",
-    paddingTop: "28px",
-  } as React.CSSProperties,
-
-  moneyHighlight: {
-    backgroundColor: "#052e16",
-    border: "1px solid #16a34a44",
-    borderRadius: "12px",
-    padding: "20px 24px",
-    marginBottom: "24px",
-    textAlign: "center" as const,
-  } as React.CSSProperties,
-
-  moneyLabel: {
-    fontSize: "12px",
-    color: "#6b7280",
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.5px",
-    marginBottom: "6px",
-  } as React.CSSProperties,
-
-  moneyValue: {
-    fontSize: "32px",
-    fontWeight: 800,
-    color: "#22c55e",
-    letterSpacing: "-0.5px",
-  } as React.CSSProperties,
-
-  moneySub: {
-    fontSize: "13px",
-    color: "#6b7280",
-    marginTop: "4px",
-  } as React.CSSProperties,
-
-  findingCard: (type: string): React.CSSProperties => {
-    const colors: Record<string, { bg: string; border: string }> = {
-      tariff_exposure:    { bg: "#1c1020", border: "#9333ea33" },
-      fta_missed:         { bg: "#1c1b10", border: "#ca8a0433" },
-      upcoming_risk:      { bg: "#1c1010", border: "#ef444433" },
-      growth_opportunity: { bg: "#0c1c10", border: "#16a34a33" },
-    };
-    const c = colors[type] || { bg: "#161a24", border: "#1e2535" };
-    return {
-      backgroundColor: c.bg,
-      border: `1px solid ${c.border}`,
-      borderRadius: "12px",
-      padding: "16px 20px",
-      marginBottom: "12px",
-      display: "flex",
-      gap: "14px",
-      alignItems: "flex-start",
-    };
-  },
-
-  findingDot: (type: string): React.CSSProperties => {
-    const colors: Record<string, string> = {
-      tariff_exposure:    "#a855f7",
-      fta_missed:         "#eab308",
-      upcoming_risk:      "#ef4444",
-      growth_opportunity: "#22c55e",
-    };
-    return {
-      width: "8px",
-      height: "8px",
-      borderRadius: "50%",
-      backgroundColor: colors[type] || "#6b7280",
-      marginTop: "6px",
-      flexShrink: 0,
-    };
-  },
-
-  findingTitle: {
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    marginBottom: "4px",
-  } as React.CSSProperties,
-
-  findingDetail: {
-    fontSize: "13px",
-    color: "#9ca3af",
-    marginBottom: "6px",
-  } as React.CSSProperties,
-
-  findingImpact: {
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "#6b7280",
-    fontStyle: "italic" as const,
-  } as React.CSSProperties,
-
-  digestSection: (type: "urgent" | "watch" | "opportunities"): React.CSSProperties => {
-    const config = {
-      urgent:        { bg: "#1c1010", border: "#ef444433" },
-      watch:         { bg: "#1c1b10", border: "#ca8a0433" },
-      opportunities: { bg: "#0c1c10", border: "#16a34a33" },
-    };
-    const c = config[type];
-    return {
-      backgroundColor: c.bg,
-      border: `1px solid ${c.border}`,
-      borderRadius: "12px",
-      padding: "20px",
-      marginBottom: "16px",
-    };
-  },
-
-  digestHeader: (type: "urgent" | "watch" | "opportunities"): React.CSSProperties => {
-    const colors = { urgent: "#ef4444", watch: "#eab308", opportunities: "#22c55e" };
-    return {
-      fontSize: "11px",
-      fontWeight: 700,
-      textTransform: "uppercase" as const,
-      letterSpacing: "0.8px",
-      color: colors[type],
-      marginBottom: "14px",
-    };
-  },
-
-  digestItem: {
-    paddingBottom: "12px",
-    marginBottom: "12px",
-    borderBottom: "1px solid #1e2535",
-  } as React.CSSProperties,
-
-  digestItemLast: {
-    paddingBottom: 0,
-    marginBottom: 0,
-    borderBottom: "none",
-  } as React.CSSProperties,
-
-  digestHeadline: {
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    marginBottom: "4px",
-  } as React.CSSProperties,
-
-  digestDetail: {
-    fontSize: "13px",
-    color: "#9ca3af",
-    marginBottom: "6px",
-  } as React.CSSProperties,
-
-  digestAction: {
-    fontSize: "12px",
-    color: "#60a5fa",
-    fontWeight: 600,
-  } as React.CSSProperties,
-
-  statRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "12px",
-    marginBottom: "20px",
-  } as React.CSSProperties,
-
-  statBox: {
-    backgroundColor: "#0f1117",
-    border: "1px solid #1e2535",
-    borderRadius: "10px",
-    padding: "14px 16px",
-  } as React.CSSProperties,
-
-  statLabel: {
-    fontSize: "11px",
-    color: "#6b7280",
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.4px",
-    marginBottom: "4px",
-  } as React.CSSProperties,
-
-  statValue: {
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#ffffff",
-  } as React.CSSProperties,
-
-  docList: {
-    listStyle: "none",
-    padding: 0,
-    margin: "0 0 20px",
-  } as React.CSSProperties,
-
-  docItem: {
-    padding: "8px 0",
-    borderBottom: "1px solid #1e2535",
-    fontSize: "14px",
-    color: "#e8eaf0",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  } as React.CSSProperties,
-
-  tipBox: {
-    backgroundColor: "#0c1c32",
-    border: "1px solid #2563eb33",
-    borderRadius: "10px",
-    padding: "16px 20px",
-    marginTop: "16px",
-  } as React.CSSProperties,
-
-  tipLabel: {
-    fontSize: "11px",
-    fontWeight: 700,
-    color: "#60a5fa",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.5px",
-    marginBottom: "6px",
-  } as React.CSSProperties,
-
-  tipText: {
-    fontSize: "14px",
-    color: "#e8eaf0",
-  } as React.CSSProperties,
-
-  errorBox: {
-    backgroundColor: "#1c1010",
-    border: "1px solid #ef444433",
-    borderRadius: "10px",
-    padding: "14px 18px",
-    color: "#ef4444",
-    fontSize: "14px",
-    marginTop: "20px",
-  } as React.CSSProperties,
-
-  spinner: {
-    display: "inline-block",
-    width: "18px",
-    height: "18px",
-    border: "2px solid #ffffff44",
-    borderTopColor: "#ffffff",
-    borderRadius: "50%",
-    animation: "spin 0.7s linear infinite",
-    marginRight: "10px",
-    verticalAlign: "middle",
-  } as React.CSSProperties,
-};
-
-// ── Helper ────────────────────────────────────────────────────────────────
-
-async function callIntel(payload: Record<string, string>) {
+async function callIntel(payload: Record<string, unknown>) {
   const res = await fetch("/api/intel", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -478,193 +81,464 @@ async function callIntel(payload: Record<string, string>) {
   return json;
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────
+function getCountryDatePairs(rows: ExportRow[]): Array<{ country: string; date: string }> {
+  const complete = rows.filter((r) => r.country && r.date);
+  const byCountry = new Map<string, string>();
+  for (const r of complete) {
+    const existing = byCountry.get(r.country);
+    if (!existing || r.date > existing) byCountry.set(r.country, r.date);
+  }
+  return Array.from(byCountry.entries()).map(([country, date]) => ({ country, date }));
+}
 
-function ProfileFields({ profile, onChange }: { profile: Profile; onChange: (p: Profile) => void }) {
+function formatDate(iso: string) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[parseInt(m) - 1]} ${y}`;
+}
+
+// ── Design tokens ─────────────────────────────────────────────────────────
+
+const C = {
+  pageBg:    "#faf8f4",
+  headerBg:  "#1c1917",
+  white:     "#ffffff",
+  cardBorder:"#e8e2d9",
+  ink:       "#1c1917",
+  inkMid:    "#44403c",
+  gray:      "#78716c",
+  muted:     "#a8a29e",
+  inputBg:   "#f5f1eb",
+  inputBorder:"#d6cfc4",
+  blue:      "#2563eb",
+  blueLight: "#eff6ff",
+  blueBorder:"#bfdbfe",
+  green:     "#16a34a",
+  greenLight:"#f0fdf4",
+  greenBorder:"#bbf7d0",
+  red:       "#dc2626",
+  redLight:  "#fef2f2",
+  amber:     "#d97706",
+  amberLight:"#fffbeb",
+  purple:    "#9333ea",
+  purpleLight:"#faf5ff",
+  tabBar:    "#ede8e0",
+};
+
+// ── Shared sub-components ─────────────────────────────────────────────────
+
+function ProductChips({ selected, onChange }: { selected: string[]; onChange: (p: string[]) => void }) {
   return (
-    <>
-      <div style={s.fieldFull}>
-        <label style={s.label}>Company Name</label>
-        <input
-          style={s.input}
-          placeholder="e.g. Sri Murugan Exports Pvt Ltd"
-          value={profile.company}
-          onChange={(e) => onChange({ ...profile, company: e.target.value })}
-        />
+    <div style={{ marginBottom: 20 }}>
+      <label style={sLabel}>Products / Categories</label>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+        {TEXTILE_PRODUCTS.map((p) => {
+          const on = selected.includes(p);
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onChange(on ? selected.filter((x) => x !== p) : [...selected, p])}
+              style={{
+                padding: "5px 14px",
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                border: `1px solid ${on ? C.blue : C.inputBorder}`,
+                backgroundColor: on ? C.blue : C.white,
+                color: on ? C.white : C.gray,
+                transition: "all 0.12s",
+              }}
+            >
+              {p}
+            </button>
+          );
+        })}
       </div>
-      <div style={s.fieldGroup}>
-        <div>
-          <label style={s.label}>Products / HSN Codes</label>
-          <input
-            style={s.input}
-            placeholder="e.g. Cotton knitwear, HSN 6109"
-            value={profile.products}
-            onChange={(e) => onChange({ ...profile, products: e.target.value })}
-          />
-        </div>
-        <div>
-          <label style={s.label}>Export Markets</label>
-          <input
-            style={s.input}
-            placeholder="e.g. USA, UK, Germany"
-            value={profile.markets}
-            onChange={(e) => onChange({ ...profile, markets: e.target.value })}
-          />
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
 
-function LoadingBtn({ loading, label }: { loading: boolean; label: string }) {
+function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: ExportRow[]) => void }) {
+  function updateRow(id: string, field: keyof ExportRow, value: string) {
+    onChange(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  }
+  function removeRow(id: string) {
+    if (rows.length === 1) return;
+    onChange(rows.filter((r) => r.id !== id));
+  }
+
   return (
-    <button type="submit" style={{ ...s.btn, ...(loading ? s.btnDisabled : {}) }} disabled={loading}>
-      {loading && <span style={s.spinner} />}
-      {loading ? "Analysing…" : label}
-    </button>
+    <div style={{ marginBottom: 20 }}>
+      <label style={sLabel}>Export History</label>
+      <p style={{ fontSize: 13, color: C.gray, marginBottom: 12, marginTop: 4 }}>
+        Add each shipment — we&apos;ll analyse what you could have saved based on the rules in force on that date.
+      </p>
+
+      {/* Column headers */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr 1.4fr 36px", gap: 8, marginBottom: 6, paddingRight: 4 }}>
+        {["Country", "Amount (₹ lakh)", "Tariff Paid (₹ lakh)", "Date of Export", ""].map((h, i) => (
+          <div key={i} style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</div>
+        ))}
+      </div>
+
+      {rows.map((row) => (
+        <div key={row.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr 1.4fr 36px", gap: 8, marginBottom: 8, alignItems: "center" }}>
+          <select
+            value={row.country}
+            onChange={(e) => updateRow(row.id, "country", e.target.value)}
+            style={{ ...sInput, appearance: "auto" as React.CSSProperties["appearance"] }}
+          >
+            <option value="">Select country</option>
+            {MARKETS.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <input
+            type="number"
+            min="0"
+            placeholder="e.g. 25"
+            value={row.amount}
+            onChange={(e) => updateRow(row.id, "amount", e.target.value)}
+            style={sInput}
+          />
+          <input
+            type="number"
+            min="0"
+            placeholder="e.g. 5"
+            value={row.tariffPaid}
+            onChange={(e) => updateRow(row.id, "tariffPaid", e.target.value)}
+            style={sInput}
+          />
+          <input
+            type="date"
+            value={row.date}
+            onChange={(e) => updateRow(row.id, "date", e.target.value)}
+            style={sInput}
+          />
+          <button
+            type="button"
+            onClick={() => removeRow(row.id)}
+            disabled={rows.length === 1}
+            title="Remove row"
+            style={{
+              border: "none",
+              background: "none",
+              cursor: rows.length === 1 ? "not-allowed" : "pointer",
+              color: rows.length === 1 ? C.muted : C.red,
+              fontSize: 18,
+              fontWeight: 700,
+              lineHeight: 1,
+              opacity: rows.length === 1 ? 0.3 : 1,
+              padding: "4px 6px",
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => onChange([...rows, newRow()])}
+        style={{ background: "none", border: "none", color: C.blue, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "6px 0", marginTop: 4 }}
+      >
+        + Add another export
+      </button>
+    </div>
   );
 }
+
+function Spinner() {
+  return <span style={{ display: "inline-block", width: 16, height: 16, border: `2px solid #ffffff44`, borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", marginRight: 8, verticalAlign: "middle" }} />;
+}
+
+function ErrorBox({ message }: { message: string }) {
+  return (
+    <div style={{ marginTop: 20, backgroundColor: C.redLight, border: `1px solid #fca5a5`, borderRadius: 10, padding: "14px 18px", color: C.red, fontSize: 14 }}>
+      {message} — please try again.
+    </div>
+  );
+}
+
+// ── Shared style atoms ────────────────────────────────────────────────────
+
+const sLabel: React.CSSProperties = {
+  display: "block", fontSize: 11, fontWeight: 700, color: C.muted,
+  textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8,
+};
+
+const sInput: React.CSSProperties = {
+  width: "100%", backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`,
+  borderRadius: 8, padding: "10px 12px", fontSize: 14, color: C.ink,
+  outline: "none", boxSizing: "border-box",
+};
+
+const sCard: React.CSSProperties = {
+  backgroundColor: C.white, border: `1px solid ${C.cardBorder}`,
+  borderRadius: 16, padding: 32,
+};
+
+const sSubmitBtn = (disabled: boolean): React.CSSProperties => ({
+  width: "100%", backgroundColor: disabled ? C.inputBorder : C.ink,
+  color: disabled ? C.muted : C.white, border: "none", borderRadius: 10,
+  padding: "13px 24px", fontSize: 15, fontWeight: 700,
+  cursor: disabled ? "not-allowed" : "pointer", marginTop: 16,
+});
 
 // ── Feature 1: Health Check ───────────────────────────────────────────────
 
-function HealthCheck({ profile, setProfile }: { profile: Profile; setProfile: (p: Profile) => void }) {
+function HealthCheck({
+  company, setCompany, products, setProducts, exportRows, setExportRows,
+}: {
+  company: string; setCompany: (v: string) => void;
+  products: string[]; setProducts: (p: string[]) => void;
+  exportRows: ExportRow[]; setExportRows: (r: ExportRow[]) => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HealthCheckResult | null>(null);
   const [error, setError] = useState("");
 
+  const completeRows = exportRows.filter((r) => r.country && r.amount && r.tariffPaid && r.date);
+  const canSubmit = company.trim() && products.length > 0 && completeRows.length > 0;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!profile.company || !profile.products || !profile.markets) return;
-    setLoading(true);
-    setError("");
-    setResult(null);
+    if (!canSubmit) return;
+    setLoading(true); setError(""); setResult(null);
     try {
       const data = await callIntel({
         action: "health_check",
-        company: profile.company,
-        products: profile.products,
-        markets: profile.markets,
+        company,
+        products,
+        exportRows: completeRows.map(({ country, amount, tariffPaid, date }) => ({ country, amount, tariffPaid, date })),
       });
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not generate report. Please try again.");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
+  const borderColor = (saving: string) => {
+    const n = parseFloat(saving.replace(/[^0-9.]/g, ""));
+    if (n > 5) return C.green;
+    if (n > 0) return C.amber;
+    return C.muted;
+  };
+
   return (
-    <div style={s.card}>
-      <div style={s.sectionTitle}>Export Health Check</div>
-      <div style={s.sectionSub}>
-        Enter your profile and see exactly where your exports are exposed — and where you&apos;re leaving money on the table.
-      </div>
+    <div style={sCard}>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Export Health Check</h2>
+      <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>
+        Enter your export records and we&apos;ll show exactly where money was left on the table — based on the rules in force on each shipment date.
+      </p>
+
       <form onSubmit={handleSubmit}>
-        <ProfileFields profile={profile} onChange={setProfile} />
-        <LoadingBtn loading={loading} label="Run Health Check" />
+        <div style={{ marginBottom: 20 }}>
+          <label style={sLabel}>Company Name</label>
+          <input style={sInput} placeholder="e.g. Sri Murugan Exports Pvt Ltd" value={company} onChange={(e) => setCompany(e.target.value)} />
+        </div>
+
+        <ProductChips selected={products} onChange={setProducts} />
+        <ExportRowsInput rows={exportRows} onChange={setExportRows} />
+
+        <button type="submit" disabled={!canSubmit || loading} style={sSubmitBtn(!canSubmit || loading)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Run Health Check"}
+        </button>
       </form>
-      {error && <div style={s.errorBox}>{error}</div>}
+
+      {error && <ErrorBox message={error} />}
+
       {result && (
-        <div style={s.resultBox}>
-          <div style={s.moneyHighlight}>
-            <div style={s.moneyLabel}>Estimated money left on the table last year</div>
-            <div style={s.moneyValue}>{result.money_left}</div>
-            <div style={s.moneySub}>In missed FTA benefits, overpaid duties &amp; preventable delays</div>
+        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
+          {/* Hero savings */}
+          <div style={{ backgroundColor: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: "20px 24px", textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Total Recoverable Savings</div>
+            <div style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 700, color: C.green, letterSpacing: "-0.5px" }}>₹{result.totalSavings} lakh</div>
+            <div style={{ fontSize: 13, color: C.gray, marginTop: 6 }}>Across {result.exports.length} export{result.exports.length !== 1 ? "s" : ""} analysed</div>
           </div>
-          {result.findings?.map((f, i) => (
-            <div key={i} style={s.findingCard(f.type)}>
-              <div style={s.findingDot(f.type)} />
-              <div>
-                <div style={s.findingTitle}>{f.title}</div>
-                <div style={s.findingDetail}>{f.detail}</div>
-                <div style={s.findingImpact}>{f.impact}</div>
+
+          {/* Per-export cards */}
+          {result.exports.map((exp, i) => (
+            <div key={i} style={{ borderLeft: `4px solid ${borderColor(exp.potentialSaving)}`, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderLeftWidth: 4, borderLeftColor: borderColor(exp.potentialSaving), borderRadius: 10, padding: "18px 20px", marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>{exp.country}</span>
+                <span style={{ fontSize: 12, color: C.muted }}>{formatDate(exp.date)}</span>
+              </div>
+              <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Exported</div>
+                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{exp.amountExported}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Tariff Paid</div>
+                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{exp.tariffPaid}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: C.green, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Potential Saving</div>
+                  <div style={{ fontSize: 14, color: C.green, fontWeight: 700 }}>{exp.potentialSaving}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: C.gray, fontStyle: "italic", marginBottom: 10 }}>{exp.loophole}</p>
+              <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.blue }}>
+                → {exp.fix}
               </div>
             </div>
           ))}
+
+          {/* Additional findings */}
+          {result.additionalFindings?.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, color: C.ink, marginBottom: 12 }}>Additional Findings</h3>
+              {result.additionalFindings.map((f, i) => (
+                <div key={i} style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "12px 16px", fontSize: 14, color: C.inkMid, marginBottom: 8 }}>
+                  {f}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Feature 2: Weekly Digest ──────────────────────────────────────────────
+// ── Feature 2 & 3: Weekly Digest (fixed + date-aware) ────────────────────
 
-function WeeklyDigest({ profile, setProfile }: { profile: Profile; setProfile: (p: Profile) => void }) {
+function WeeklyDigest({ company, products, exportRows }: { company: string; products: string[]; exportRows: ExportRow[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
+  const [fallbackMarkets, setFallbackMarkets] = useState("");
+
+  const pairs = getCountryDatePairs(exportRows);
+  const hasPairs = pairs.length > 0;
+  const today = new Date().toISOString().slice(0, 10);
+
+  const canSubmit = !loading && company.trim() && products.length > 0 && (hasPairs || fallbackMarkets.trim());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!profile.company || !profile.products || !profile.markets) return;
-    setLoading(true);
-    setError("");
-    setResult(null);
+    if (!canSubmit) return;
+    setLoading(true); setError(""); setResult(null);
+
+    const countryDatePairs = hasPairs
+      ? pairs
+      : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ country, date: today }));
+
     try {
-      const data = await callIntel({
-        action: "weekly_digest",
-        company: profile.company,
-        products: profile.products,
-        markets: profile.markets,
+      const data = await callIntel({ action: "weekly_digest", company, products, countryDatePairs });
+      // Normalise: ensure all three sections exist as arrays
+      setResult({
+        urgent: Array.isArray(data.urgent) ? data.urgent : [],
+        watch: Array.isArray(data.watch) ? data.watch : [],
+        opportunities: Array.isArray(data.opportunities) ? data.opportunities : [],
       });
-      setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not generate digest. Please try again.");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
-  function DigestSection({
-    type,
-    label,
-    items,
-  }: {
-    type: "urgent" | "watch" | "opportunities";
-    label: string;
-    items: DigestItem[];
-  }) {
-    if (!items?.length) return null;
+  function DigestSection({ type, label, items }: { type: "urgent" | "watch" | "opportunities"; label: string; items: DigestItem[] }) {
+    const config = {
+      urgent:        { border: C.red,    bg: C.redLight,   textColor: C.red },
+      watch:         { border: C.amber,  bg: C.amberLight, textColor: C.amber },
+      opportunities: { border: C.green,  bg: C.greenLight, textColor: C.green },
+    };
+    const c = config[type];
+
+    // Find reference date for a country
+    const refDate = (country: string) => {
+      const p = pairs.find((x) => x.country === country);
+      return p ? formatDate(p.date) : formatDate(today);
+    };
+
     return (
-      <div style={s.digestSection(type)}>
-        <div style={s.digestHeader(type)}>{label}</div>
-        {items.map((item, i) => (
-          <div key={i} style={i === items.length - 1 ? s.digestItemLast : s.digestItem}>
-            <div style={s.digestHeadline}>{item.headline}</div>
-            <div style={s.digestDetail}>{item.detail}</div>
-            <div style={s.digestAction}>→ {item.action}</div>
-          </div>
-        ))}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: c.textColor, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12 }}>{label}</div>
+        {items.length === 0 ? (
+          <div style={{ fontSize: 13, color: C.muted, fontStyle: "italic", padding: "10px 0" }}>Nothing to flag this week for your markets.</div>
+        ) : (
+          items.map((item, i) => (
+            <div key={i} style={{ borderLeft: `3px solid ${c.border}`, backgroundColor: c.bg, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, gap: 12 }}>
+                <div style={{ fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, color: C.ink }}>{item.title}</div>
+                <div style={{ flexShrink: 0, fontSize: 11, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderRadius: 20, padding: "2px 10px", color: C.gray, whiteSpace: "nowrap" }}>
+                  {item.country} · {refDate(item.country)}
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.6 }}>{item.detail}</div>
+            </div>
+          ))
+        )}
       </div>
     );
   }
 
   return (
-    <div style={s.card}>
-      <div style={s.sectionTitle}>Weekly Intelligence Digest</div>
-      <div style={s.sectionSub}>
-        See a sample of the weekly briefing you&apos;d receive — urgent alerts, items to watch, and opportunities specific to your products and markets.
-      </div>
-      <form onSubmit={handleSubmit}>
-        <ProfileFields profile={profile} onChange={setProfile} />
-        <LoadingBtn loading={loading} label="Generate Sample Digest" />
-      </form>
-      {error && <div style={s.errorBox}>{error}</div>}
-      {result && (
-        <div style={s.resultBox}>
-          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "20px", fontWeight: 600 }}>
-            {result.week}
+    <div style={sCard}>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Weekly Intelligence Digest</h2>
+      <p style={{ fontSize: 14, color: C.gray, marginBottom: 24 }}>
+        Personalised to your products and markets — anchored to your export dates.
+      </p>
+
+      {/* Show what data is being used */}
+      {hasPairs ? (
+        <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: C.blue }}>
+          <strong>Using data from your Health Check:</strong>{" "}
+          {pairs.map((p) => `${p.country} (${formatDate(p.date)})`).join(", ")}
+        </div>
+      ) : (
+        <div style={{ marginBottom: 20 }}>
+          <label style={sLabel}>Export Markets</label>
+          <p style={{ fontSize: 12, color: C.gray, marginBottom: 8 }}>Fill in the Health Check for date-aware results, or enter markets here.</p>
+          <input
+            style={sInput}
+            placeholder="e.g. UK, USA, Germany"
+            value={fallbackMarkets}
+            onChange={(e) => setFallbackMarkets(e.target.value)}
+          />
+        </div>
+      )}
+
+      {/* Products read-only chips */}
+      <div style={{ marginBottom: 20 }}>
+        <label style={sLabel}>Products</label>
+        {products.length === 0 ? (
+          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Select products in the Health Check tab first.</p>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {products.map((p) => (
+              <span key={p} style={{ padding: "4px 12px", borderRadius: 20, fontSize: 13, backgroundColor: C.blue, color: C.white, fontWeight: 500 }}>{p}</span>
+            ))}
           </div>
-          <DigestSection type="urgent" label="Urgent — Act Now" items={result.urgent} />
-          <DigestSection type="watch" label="Watch — Monitor Closely" items={result.watch} />
-          <DigestSection type="opportunities" label="Opportunities" items={result.opportunities} />
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <button type="submit" disabled={!canSubmit} style={sSubmitBtn(!canSubmit)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Generate Digest"}
+        </button>
+      </form>
+
+      {error && <ErrorBox message={error} />}
+
+      {result && (
+        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
+          <DigestSection type="urgent"        label="Urgent — Act Now"        items={result.urgent} />
+          <DigestSection type="watch"         label="Watch — Monitor Closely" items={result.watch} />
+          <DigestSection type="opportunities" label="Opportunities"           items={result.opportunities} />
         </div>
       )}
     </div>
   );
 }
 
-// ── Feature 3: Shipment Check ─────────────────────────────────────────────
+// ── Feature 3: Shipment Check (unchanged) ────────────────────────────────
 
 function ShipmentCheck() {
   const [hsn, setHsn] = useState("");
@@ -677,90 +551,80 @@ function ShipmentCheck() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!hsn || !destination || !value) return;
-    setLoading(true);
-    setError("");
-    setResult(null);
+    setLoading(true); setError(""); setResult(null);
     try {
-      const data = await callIntel({ action: "shipment_check", hsn, destination, value });
+      const data = await callIntel({ action: "shipment_check", hsn, destination, value } as Record<string, unknown>);
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not check shipment. Please try again.");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={s.card}>
-      <div style={s.sectionTitle}>Shipment Check</div>
-      <div style={s.sectionSub}>
-        Before your shipment leaves, check the tariff rate, duty, required documents, and any port issues — plus one tip to save money.
-      </div>
+    <div style={sCard}>
+      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Shipment Check</h2>
+      <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>
+        Before your shipment leaves — check tariff rate, duty, required documents, and one tip to save money.
+      </p>
+
       <form onSubmit={handleSubmit}>
-        <div style={s.fieldGroup}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
           <div>
-            <label style={s.label}>HSN Code</label>
-            <input
-              style={s.input}
-              placeholder="e.g. 6109"
-              value={hsn}
-              onChange={(e) => setHsn(e.target.value)}
-            />
+            <label style={sLabel}>HSN Code</label>
+            <input style={sInput} placeholder="e.g. 6109" value={hsn} onChange={(e) => setHsn(e.target.value)} />
           </div>
           <div>
-            <label style={s.label}>Destination Country</label>
-            <input
-              style={s.input}
-              placeholder="e.g. United States"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-            />
+            <label style={sLabel}>Destination Country</label>
+            <input style={sInput} placeholder="e.g. United States" value={destination} onChange={(e) => setDestination(e.target.value)} />
           </div>
         </div>
-        <div style={s.fieldFull}>
-          <label style={s.label}>Shipment Value</label>
-          <input
-            style={s.input}
-            placeholder="e.g. $50,000 or ₹40 lakh"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-          />
+        <div style={{ marginBottom: 16 }}>
+          <label style={sLabel}>Shipment Value</label>
+          <input style={sInput} placeholder="e.g. $50,000 or ₹40 lakh" value={value} onChange={(e) => setValue(e.target.value)} />
         </div>
-        <LoadingBtn loading={loading} label="Check Shipment" />
+        <button type="submit" disabled={!hsn || !destination || !value || loading} style={sSubmitBtn(!hsn || !destination || !value || loading)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Check Shipment"}
+        </button>
       </form>
-      {error && <div style={s.errorBox}>{error}</div>}
+
+      {error && <ErrorBox message={error} />}
+
       {result && (
-        <div style={s.resultBox}>
-          <div style={s.statRow}>
-            <div style={s.statBox}>
-              <div style={s.statLabel}>Tariff Rate</div>
-              <div style={{ ...s.statValue, color: "#ef4444" }}>{result.tariff_rate}</div>
+        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+            <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ ...sLabel, marginBottom: 4 }}>Tariff Rate</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.red }}>{result.tariff_rate}</div>
             </div>
-            <div style={s.statBox}>
-              <div style={s.statLabel}>Estimated Duty</div>
-              <div style={{ ...s.statValue, color: "#eab308" }}>{result.estimated_duty}</div>
+            <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ ...sLabel, marginBottom: 4 }}>Estimated Duty</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.amber }}>{result.estimated_duty}</div>
             </div>
           </div>
-          <div style={{ marginBottom: "16px" }}>
-            <div style={s.label}>Required Documents</div>
-            <ul style={s.docList}>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={sLabel}>Required Documents</label>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {result.documents?.map((doc, i) => (
-                <li key={i} style={s.docItem}>
-                  <span style={{ color: "#22c55e", fontSize: "12px" }}>✓</span>
-                  {doc}
+                <li key={i} style={{ padding: "8px 0", borderBottom: `1px solid ${C.cardBorder}`, fontSize: 14, color: C.inkMid, display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>✓</span>{doc}
                 </li>
               ))}
             </ul>
           </div>
+
           {result.port_issues && (
-            <div style={{ marginBottom: "16px" }}>
-              <div style={s.label}>Port &amp; Customs Notes</div>
-              <div style={{ fontSize: "14px", color: "#9ca3af" }}>{result.port_issues}</div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={sLabel}>Port &amp; Customs Notes</label>
+              <div style={{ fontSize: 14, color: C.gray }}>{result.port_issues}</div>
             </div>
           )}
-          <div style={s.tipBox}>
-            <div style={s.tipLabel}>Money-Saving Tip</div>
-            <div style={s.tipText}>{result.money_tip}</div>
+
+          <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "16px 20px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Money-Saving Tip</div>
+            <div style={{ fontSize: 14, color: C.inkMid }}>{result.money_tip}</div>
           </div>
         </div>
       )}
@@ -772,49 +636,65 @@ function ShipmentCheck() {
 
 export default function Home() {
   const [tab, setTab] = useState<"health" | "digest" | "shipment">("health");
-  const [profile, setProfile] = useState<Profile>({ company: "", products: "", markets: "" });
+  const [company, setCompany] = useState("");
+  const [products, setProducts] = useState<string[]>([]);
+  const [exportRows, setExportRows] = useState<ExportRow[]>([newRow()]);
 
   return (
-    <div style={s.page}>
+    <div style={{ minHeight: "100vh", backgroundColor: C.pageBg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: 1.6 }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 3px #2563eb22; }
-        button:hover:not(:disabled) { background-color: #1d4ed8 !important; }
+        input:focus, select:focus { border-color: #1c1917 !important; box-shadow: 0 0 0 3px rgba(28,25,23,0.08) !important; outline: none; }
+        button:hover:not(:disabled) { opacity: 0.88; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
-      <header style={s.header}>
-        <div style={s.logo}>
-          Trade<span style={s.logoAccent}>Intel</span>
+      {/* Header */}
+      <header style={{ backgroundColor: C.headerBg, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px" }}>
+        <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, color: C.white }}>
+          Trade<span style={{ color: "#60a5fa" }}>Intel</span>
         </div>
-        <div style={s.tagline}>Trade intelligence for Indian textile exporters</div>
+        <div style={{ fontSize: 13, color: "#a8a29e" }}>Trade intelligence for Indian textile exporters</div>
       </header>
 
-      <div style={s.hero}>
-        <div style={s.badge}>Live Intelligence · No Login Required</div>
-        <h1 style={s.heroTitle}>
+      {/* Hero */}
+      <div style={{ textAlign: "center", padding: "52px 24px 40px", maxWidth: 680, margin: "0 auto" }}>
+        <div style={{ display: "inline-block", backgroundColor: "#e8f0fe", color: C.blue, border: `1px solid ${C.blueBorder}`, borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 600, letterSpacing: "0.3px", marginBottom: 20 }}>
+          Live Intelligence · No Login Required
+        </div>
+        <h1 style={{ fontFamily: "Georgia, serif", fontSize: 40, fontWeight: 700, color: C.ink, lineHeight: 1.2, letterSpacing: "-0.5px", marginBottom: 16 }}>
           Know what&apos;s changing before<br />it costs you money
         </h1>
-        <p style={s.heroSub}>
-          US tariffs at 63.9% · India-UK FTA live · EU CBAM from Q1 2026 — enter your profile and get intelligence specific to your products and markets, right now.
+        <p style={{ fontSize: 17, color: C.gray, maxWidth: 520, margin: "0 auto" }}>
+          US tariffs at 63.9% · India-UK FTA live from July 2025 · EU CBAM from Q1 2026 — enter your export history and get specific, date-accurate intelligence.
         </p>
       </div>
 
-      <main style={s.main}>
-        <div style={s.tabs}>
-          <button style={s.tab(tab === "health")} onClick={() => setTab("health")}>
-            Health Check
-          </button>
-          <button style={s.tab(tab === "digest")} onClick={() => setTab("digest")}>
-            Weekly Digest
-          </button>
-          <button style={s.tab(tab === "shipment")} onClick={() => setTab("shipment")}>
-            Shipment Check
-          </button>
+      {/* Main */}
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px" }}>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 28, backgroundColor: C.tabBar, padding: 5, borderRadius: 12 }}>
+          {(["health", "digest", "shipment"] as const).map((t) => {
+            const labels = { health: "Health Check", digest: "Weekly Digest", shipment: "Shipment Check" };
+            const active = tab === t;
+            return (
+              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600, backgroundColor: active ? C.white : "transparent", color: active ? C.ink : C.muted, boxShadow: active ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s" }}>
+                {labels[t]}
+              </button>
+            );
+          })}
         </div>
 
-        {tab === "health" && <HealthCheck profile={profile} setProfile={setProfile} />}
-        {tab === "digest" && <WeeklyDigest profile={profile} setProfile={setProfile} />}
+        {tab === "health" && (
+          <HealthCheck
+            company={company} setCompany={setCompany}
+            products={products} setProducts={setProducts}
+            exportRows={exportRows} setExportRows={setExportRows}
+          />
+        )}
+        {tab === "digest" && (
+          <WeeklyDigest company={company} products={products} exportRows={exportRows} />
+        )}
         {tab === "shipment" && <ShipmentCheck />}
       </main>
     </div>

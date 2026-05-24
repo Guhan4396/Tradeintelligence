@@ -2,86 +2,97 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
-function buildHealthCheckPrompt(company: string, products: string, markets: string) {
-  return `You are a trade intelligence analyst specializing in Indian textile exports.
+// Types used in prompts
+type ExportRowInput = { country: string; amount: string; tariffPaid: string; date: string; };
+type CountryDate = { country: string; date: string; };
 
-A textile exporter has provided their profile:
-- Company: ${company}
-- Products/HSN codes: ${products}
-- Export markets: ${markets}
+function buildHealthCheckPrompt(company: string, products: string[], exportRows: ExportRowInput[]): string {
+  const rowsText = exportRows
+    .map(
+      (r, i) =>
+        `  Row ${i + 1}: Country=${r.country}, Date=${r.date}, Amount=₹${r.amount} lakh, Tariff Paid=₹${r.tariffPaid} lakh`
+    )
+    .join("\n");
 
-Generate a Health Check report. Return ONLY valid JSON with this exact structure:
+  return `You are a trade intelligence analyst specialising in Indian textile exports.
+
+Company: ${company}
+Products: ${products.join(", ")}
+
+Export history:
+${rowsText}
+
+CRITICAL INSTRUCTION: Evaluate each export row using ONLY the tariff/FTA/regulatory rules that were in force AS OF THAT SPECIFIC EXPORT DATE. Do not apply rules that had not yet come into effect on the export date.
+
+Key regulatory timeline (apply strictly by date):
+- India-UK FTA duty-free: in force from 1 July 2025 ONLY — do NOT apply for any export dated before 1 July 2025
+- India-UAE CEPA: in force since May 2022 — applicable for exports from May 2022 onwards
+- India-Australia ECTA: in force from December 2022 — applicable for exports from December 2022 onwards
+- EU CBAM carbon reporting: applicable from Q1 2026 ONLY — do NOT apply for exports before 1 January 2026
+- US tariff on Indian textiles: escalated through 2025, approximately 63.9% effective rate
+- RoDTEP scheme: ongoing from January 2021 — applicable for exports from January 2021 onwards
+
+For each row, identify:
+- Whether the exporter could have used an FTA or scheme that was available on that date to reduce duty
+- The actual potential saving in ₹ lakh
+- A concise loophole explanation and a specific fix
+
+Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
 {
-  "money_left": "₹X-Y lakh",
-  "findings": [
+  "totalSavings": <number in lakh, sum of all potentialSaving values>,
+  "exports": [
     {
-      "type": "tariff_exposure",
-      "title": "string",
-      "detail": "string",
-      "impact": "string"
-    },
-    {
-      "type": "fta_missed",
-      "title": "string",
-      "detail": "string",
-      "impact": "string"
-    },
-    {
-      "type": "upcoming_risk",
-      "title": "string",
-      "detail": "string",
-      "impact": "string"
-    },
-    {
-      "type": "growth_opportunity",
-      "title": "string",
-      "detail": "string",
-      "impact": "string"
+      "country": "<country>",
+      "date": "<date>",
+      "amountExported": "₹<amount> lakh",
+      "tariffPaid": "₹<tariffPaid> lakh",
+      "potentialSaving": "₹<number> lakh",
+      "loophole": "<why this saving was available>",
+      "fix": "<specific actionable fix>"
     }
-  ]
+  ],
+  "additionalFindings": ["<finding 1>", "<finding 2>"]
+}`;
 }
 
-Be specific to their products and markets. Reference real current tariff regimes (US 63.9% effective tariff on Indian textiles, India-UK FTA since July 2025, EU CBAM from Q1 2026). Make the money_left figure realistic for a ₹50-100 crore exporter. Return only the JSON, no other text.`;
-}
+function buildWeeklyDigestPrompt(company: string, products: string[], countryDatePairs: CountryDate[]): string {
+  const today = new Date().toISOString().slice(0, 10);
 
-function buildDigestPrompt(company: string, products: string, markets: string) {
-  return `You are a trade intelligence analyst specializing in Indian textile exports.
+  let marketText: string;
+  if (countryDatePairs.length === 0) {
+    marketText = `Markets: major textile export markets (USA, UK, EU, UAE, Australia)\nReference date: ${today}`;
+  } else {
+    const lines = countryDatePairs
+      .map((p) => `  - ${p.country} (reference date: ${p.date})`)
+      .join("\n");
+    marketText = `Markets and reference dates:\n${lines}`;
+  }
 
-Exporter profile:
-- Company: ${company}
-- Products/HSN codes: ${products}
-- Export markets: ${markets}
+  return `You are a trade intelligence analyst specialising in Indian textile exports.
 
-Generate a sample Weekly Intelligence Digest. Return ONLY valid JSON with this exact structure:
+Company: ${company}
+Products: ${products.join(", ")}
+${marketText}
+
+Generate a Weekly Intelligence Digest personalised to the company's products and the listed markets. For each digest item, anchor it to the reference date of the relevant country. Only include regulations/events that were in force or imminent as of that country's reference date.
+
+Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
 {
-  "week": "Week of May 19-25, 2026",
   "urgent": [
-    {
-      "headline": "string",
-      "detail": "string",
-      "action": "string"
-    }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
   ],
   "watch": [
-    {
-      "headline": "string",
-      "detail": "string",
-      "action": "string"
-    }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
   ],
   "opportunities": [
-    {
-      "headline": "string",
-      "detail": "string",
-      "action": "string"
-    }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
   ]
 }
 
-Include 2-3 items per category. Be specific to their products and markets. Reference real regulatory changes: US tariffs, India-UK FTA (live July 2025), EU CBAM (Q1 2026), DGFT notifications, CBIC circulars. Make it feel like real intelligence they would act on. Return only the JSON, no other text.`;
+Include 2-3 items per section, each specific to the listed products. Be concrete and actionable.`;
 }
 
-function buildShipmentPrompt(hsn: string, destination: string, value: string) {
+function buildShipmentPrompt(hsn: string, destination: string, value: string): string {
   return `You are a trade compliance specialist for Indian textile exports.
 
 Shipment details:
@@ -113,7 +124,7 @@ async function callClaude(prompt: string, apiKey: string): Promise<string> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -143,18 +154,42 @@ export async function POST(req: NextRequest) {
     let prompt: string;
 
     if (action === "health_check") {
-      prompt = buildHealthCheckPrompt(body.company, body.products, body.markets);
+      const { company, products, exportRows } = body as {
+        company: string;
+        products: string[];
+        exportRows: ExportRowInput[];
+      };
+      prompt = buildHealthCheckPrompt(company, products, exportRows);
     } else if (action === "weekly_digest") {
-      prompt = buildDigestPrompt(body.company, body.products, body.markets);
+      const { company, products, countryDatePairs } = body as {
+        company: string;
+        products: string[];
+        countryDatePairs: CountryDate[];
+      };
+      prompt = buildWeeklyDigestPrompt(company, products, countryDatePairs);
     } else if (action === "shipment_check") {
-      prompt = buildShipmentPrompt(body.hsn, body.destination, body.value);
+      const { hsn, destination, value } = body as {
+        hsn: string;
+        destination: string;
+        value: string;
+      };
+      prompt = buildShipmentPrompt(hsn, destination, value);
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
     const text = await callClaude(prompt, apiKey);
     const jsonText = text.replace(/```json\n?|\n?```/g, "").trim();
-    const data = JSON.parse(jsonText);
+
+    let data: unknown;
+    try {
+      data = JSON.parse(jsonText);
+    } catch {
+      return NextResponse.json(
+        { error: "Failed to parse AI response. Please try again." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(data);
   } catch (err) {

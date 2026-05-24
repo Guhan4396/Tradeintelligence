@@ -20,6 +20,12 @@ type ExportRow = {
   date: string;
 };
 
+type ProductRow = {
+  id: string;
+  name: string;
+  hsn: string;
+};
+
 type HealthExport = {
   country: string;
   date: string;
@@ -40,6 +46,9 @@ type DigestItem = {
   title: string;
   detail: string;
   country: string;
+  referenceDate?: string;
+  product?: string;
+  hsn?: string;
 };
 
 type DigestResult = {
@@ -62,6 +71,10 @@ type ShipmentResult = {
 
 function newRow(): ExportRow {
   return { id: Math.random().toString(36).slice(2), country: "", amount: "", tariffPaid: "", date: "" };
+}
+
+function newProductRow(): ProductRow {
+  return { id: Math.random().toString(36).slice(2), name: "", hsn: "" };
 }
 
 async function callIntel(payload: Record<string, unknown>) {
@@ -122,16 +135,55 @@ const C = {
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-function ProductField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ProductRowsInput({ rows, onChange }: { rows: ProductRow[]; onChange: (r: ProductRow[]) => void }) {
+  function updateRow(id: string, field: keyof ProductRow, value: string) {
+    onChange(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  }
+  function removeRow(id: string) {
+    if (rows.length === 1) return;
+    onChange(rows.filter((r) => r.id !== id));
+  }
+
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={sLabel}>Products / HSN Codes</label>
-      <input
-        style={sInput}
-        placeholder="e.g. Cotton T-shirts, Knitwear, HSN 6109"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <label style={sLabel}>Products &amp; HSN Codes</label>
+      <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr 36px", gap: 8, marginBottom: 6 }}>
+        {["Product / Category", "HSN Code", ""].map((h, i) => (
+          <div key={i} style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</div>
+        ))}
+      </div>
+      {rows.map((row) => (
+        <div key={row.id} style={{ display: "grid", gridTemplateColumns: "3fr 2fr 36px", gap: 8, marginBottom: 8, alignItems: "center" }}>
+          <input
+            style={sInput}
+            placeholder="e.g. Cotton knitwear"
+            value={row.name}
+            onChange={(e) => updateRow(row.id, "name", e.target.value)}
+          />
+          <input
+            style={sInput}
+            placeholder="e.g. 6109.10"
+            value={row.hsn}
+            onChange={(e) => updateRow(row.id, "hsn", e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => removeRow(row.id)}
+            disabled={rows.length === 1}
+            title="Remove"
+            style={{ border: "none", background: "none", cursor: rows.length === 1 ? "not-allowed" : "pointer", color: rows.length === 1 ? C.muted : C.red, fontSize: 18, fontWeight: 700, opacity: rows.length === 1 ? 0.3 : 1, padding: "4px 6px" }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange([...rows, newProductRow()])}
+        style={{ background: "none", border: "none", color: C.blue, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "6px 0", marginTop: 4 }}
+      >
+        + Add product
+      </button>
     </div>
   );
 }
@@ -264,10 +316,10 @@ const sSubmitBtn = (disabled: boolean): React.CSSProperties => ({
 // ── Feature 1: Health Check ───────────────────────────────────────────────
 
 function HealthCheck({
-  company, setCompany, products, setProducts, exportRows, setExportRows,
+  company, setCompany, productRows, setProductRows, exportRows, setExportRows,
 }: {
   company: string; setCompany: (v: string) => void;
-  products: string; setProducts: (p: string) => void;
+  productRows: ProductRow[]; setProductRows: (p: ProductRow[]) => void;
   exportRows: ExportRow[]; setExportRows: (r: ExportRow[]) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -275,7 +327,8 @@ function HealthCheck({
   const [error, setError] = useState("");
 
   const completeRows = exportRows.filter((r) => r.country && r.amount && r.tariffPaid && r.date);
-  const canSubmit = company.trim() && products.trim() && completeRows.length > 0;
+  const hasProducts = productRows.some((r) => r.name.trim());
+  const canSubmit = company.trim() && hasProducts && completeRows.length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -285,7 +338,7 @@ function HealthCheck({
       const data = await callIntel({
         action: "health_check",
         company,
-        products: products.split(",").map((s) => s.trim()).filter(Boolean),
+        products: productRows.filter((r) => r.name.trim()).map((r) => r.name),
         exportRows: completeRows.map(({ country, amount, tariffPaid, date }) => ({ country, amount, tariffPaid, date })),
       });
       setResult(data);
@@ -316,7 +369,7 @@ function HealthCheck({
           <input style={sInput} placeholder="e.g. Sri Murugan Exports Pvt Ltd" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
 
-        <ProductField value={products} onChange={setProducts} />
+        <ProductRowsInput rows={productRows} onChange={setProductRows} />
         <ExportRowsInput rows={exportRows} onChange={setExportRows} />
 
         <button type="submit" disabled={!canSubmit || loading} style={sSubmitBtn(!canSubmit || loading)}>
@@ -382,7 +435,7 @@ function HealthCheck({
 
 // ── Feature 2 & 3: Weekly Digest (fixed + date-aware) ────────────────────
 
-function WeeklyDigest({ company, products, exportRows }: { company: string; products: string; exportRows: ExportRow[] }) {
+function WeeklyDigest({ company, productRows, exportRows }: { company: string; productRows: ProductRow[]; exportRows: ExportRow[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
@@ -391,8 +444,9 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
   const pairs = getCountryDatePairs(exportRows);
   const hasPairs = pairs.length > 0;
   const today = new Date().toISOString().slice(0, 10);
+  const hasProducts = productRows.some((r) => r.name.trim());
 
-  const canSubmit = !loading && company.trim() && products.trim() && (hasPairs || fallbackMarkets.trim());
+  const canSubmit = !loading && company.trim() && hasProducts && (hasPairs || fallbackMarkets.trim());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -403,8 +457,10 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
       ? pairs
       : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ country, date: today }));
 
+    const products = productRows.filter((r) => r.name.trim()).map((r) => ({ name: r.name, hsn: r.hsn }));
+
     try {
-      const data = await callIntel({ action: "weekly_digest", company, products: products.split(",").map((s) => s.trim()).filter(Boolean), countryDatePairs });
+      const data = await callIntel({ action: "weekly_digest", company, products, countryDatePairs });
       // Normalise: ensure all three sections exist as arrays
       setResult({
         urgent: Array.isArray(data.urgent) ? data.urgent : [],
@@ -438,17 +494,22 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
         {items.length === 0 ? (
           <div style={{ fontSize: 13, color: C.muted, fontStyle: "italic", padding: "10px 0" }}>Nothing to flag this week for your markets.</div>
         ) : (
-          items.map((item, i) => (
-            <div key={i} style={{ borderLeft: `3px solid ${c.border}`, backgroundColor: c.bg, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6, gap: 12 }}>
-                <div style={{ fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, color: C.ink }}>{item.title}</div>
-                <div style={{ flexShrink: 0, fontSize: 11, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderRadius: 20, padding: "2px 10px", color: C.gray, whiteSpace: "nowrap" }}>
-                  {item.country} · {refDate(item.country)}
-                </div>
+          items.map((item, i) => {
+            const rd = item.referenceDate ? formatDate(item.referenceDate) : refDate(item.country);
+            const tagParts = [
+              item.product,
+              item.hsn ? `HSN ${item.hsn}` : null,
+              item.country,
+              `as of ${rd}`,
+            ].filter(Boolean).join(" · ");
+            return (
+              <div key={i} style={{ borderLeft: `3px solid ${c.border}`, backgroundColor: c.bg, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: 10 }}>
+                <div style={{ fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 6 }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 500 }}>{tagParts}</div>
+                <div style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.6 }}>{item.detail}</div>
               </div>
-              <div style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.6 }}>{item.detail}</div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     );
@@ -482,11 +543,17 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
 
       {/* Products read-only */}
       <div style={{ marginBottom: 20 }}>
-        <label style={sLabel}>Products</label>
-        {!products.trim() ? (
-          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Enter products in the Health Check tab first.</p>
+        <label style={sLabel}>Products &amp; HSN Codes</label>
+        {!hasProducts ? (
+          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Add products in the Health Check tab first.</p>
         ) : (
-          <div style={{ fontSize: 14, color: C.inkMid, backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`, borderRadius: 8, padding: "10px 12px" }}>{products}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {productRows.filter((r) => r.name.trim()).map((r) => (
+              <span key={r.id} style={{ fontSize: 12, backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`, borderRadius: 20, padding: "4px 12px", color: C.inkMid }}>
+                {r.name}{r.hsn ? ` · ${r.hsn}` : ""}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
@@ -608,7 +675,7 @@ function ShipmentCheck() {
 export default function Home() {
   const [tab, setTab] = useState<"health" | "digest" | "shipment">("health");
   const [company, setCompany] = useState("");
-  const [products, setProducts] = useState("");
+  const [productRows, setProductRows] = useState<ProductRow[]>([newProductRow()]);
   const [exportRows, setExportRows] = useState<ExportRow[]>([newRow()]);
 
   return (
@@ -659,12 +726,12 @@ export default function Home() {
         {tab === "health" && (
           <HealthCheck
             company={company} setCompany={setCompany}
-            products={products} setProducts={setProducts}
+            productRows={productRows} setProductRows={setProductRows}
             exportRows={exportRows} setExportRows={setExportRows}
           />
         )}
         {tab === "digest" && (
-          <WeeklyDigest company={company} products={products} exportRows={exportRows} />
+          <WeeklyDigest company={company} productRows={productRows} exportRows={exportRows} />
         )}
         {tab === "shipment" && <ShipmentCheck />}
       </main>

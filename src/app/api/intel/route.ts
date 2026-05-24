@@ -55,41 +55,58 @@ Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape
 }`;
 }
 
-function buildWeeklyDigestPrompt(company: string, products: string[], countryDatePairs: CountryDate[]): string {
+function buildWeeklyDigestPrompt(
+  company: string,
+  products: { name: string; hsn: string }[],
+  countryDatePairs: CountryDate[]
+): string {
   const today = new Date().toISOString().slice(0, 10);
+
+  const productLines = products
+    .map((p) => `  - ${p.name}${p.hsn ? ` (HSN: ${p.hsn})` : ""}`)
+    .join("\n");
 
   let marketText: string;
   if (countryDatePairs.length === 0) {
-    marketText = `Markets: major textile export markets (USA, UK, EU, UAE, Australia)\nReference date: ${today}`;
+    marketText = `Markets and reference dates:\n  - USA (reference date: ${today})\n  - UK (reference date: ${today})\n  - EU (reference date: ${today})`;
   } else {
-    const lines = countryDatePairs
+    marketText = `Markets and reference dates:\n` + countryDatePairs
       .map((p) => `  - ${p.country} (reference date: ${p.date})`)
       .join("\n");
-    marketText = `Markets and reference dates:\n${lines}`;
   }
 
   return `You are a trade intelligence analyst specialising in Indian textile exports.
 
 Company: ${company}
-Products: ${products.join(", ")}
+
+Products and HSN codes to analyse:
+${productLines}
+
 ${marketText}
 
-Generate a Weekly Intelligence Digest personalised to the company's products and the listed markets. For each digest item, anchor it to the reference date of the relevant country. Only include regulations/events that were in force or imminent as of that country's reference date.
+CRITICAL INSTRUCTION: Only generate digest items that are specifically relevant to one of the HSN codes and country combinations listed above, as of that country's reference date. Do not include generic items — every item must map to a specific HSN code + country + date combination. Do not surface regulations that came into force after the reference date, and do not surface historical information irrelevant to the reference date.
+
+Key regulatory timeline (apply strictly by date):
+- India-UK FTA duty-free: in force from 1 July 2025 ONLY
+- India-UAE CEPA: in force since May 2022
+- EU CBAM carbon reporting: applicable from Q1 2026 ONLY
+- US tariff on Indian textiles: ~63.9% effective rate through 2025
+- RoDTEP scheme: ongoing from January 2021
 
 Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
 {
   "urgent": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail specific to the HSN+country>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
   ],
   "watch": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
   ],
   "opportunities": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>" }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
   ]
 }
 
-Include 2-3 items per section, each specific to the listed products. Be concrete and actionable.`;
+Include 2-3 items per section. Be concrete, specific, and actionable.`;
 }
 
 function buildShipmentPrompt(hsn: string, destination: string, value: string): string {
@@ -163,7 +180,7 @@ export async function POST(req: NextRequest) {
     } else if (action === "weekly_digest") {
       const { company, products, countryDatePairs } = body as {
         company: string;
-        products: string[];
+        products: { name: string; hsn: string }[];
         countryDatePairs: CountryDate[];
       };
       prompt = buildWeeklyDigestPrompt(company, products, countryDatePairs);

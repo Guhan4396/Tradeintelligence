@@ -14,19 +14,17 @@ const MARKETS = [
 
 type ExportRow = {
   id: string;
+  product: string;
+  hsn: string;
   country: string;
   amount: string;
   tariffPaid: string;
   date: string;
 };
 
-type ProductRow = {
-  id: string;
-  name: string;
-  hsn: string;
-};
-
 type HealthExport = {
+  product: string;
+  hsn: string;
   country: string;
   date: string;
   amountExported: string;
@@ -70,11 +68,7 @@ type ShipmentResult = {
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function newRow(): ExportRow {
-  return { id: Math.random().toString(36).slice(2), country: "", amount: "", tariffPaid: "", date: "" };
-}
-
-function newProductRow(): ProductRow {
-  return { id: Math.random().toString(36).slice(2), name: "", hsn: "" };
+  return { id: Math.random().toString(36).slice(2), product: "", hsn: "", country: "", amount: "", tariffPaid: "", date: "" };
 }
 
 async function callIntel(payload: Record<string, unknown>) {
@@ -88,16 +82,6 @@ async function callIntel(payload: Record<string, unknown>) {
   return json;
 }
 
-function getCountryDatePairs(rows: ExportRow[]): Array<{ country: string; date: string }> {
-  const complete = rows.filter((r) => r.country && r.date);
-  const byCountry = new Map<string, string>();
-  for (const r of complete) {
-    const existing = byCountry.get(r.country);
-    if (!existing || r.date > existing) byCountry.set(r.country, r.date);
-  }
-  return Array.from(byCountry.entries()).map(([country, date]) => ({ country, date }));
-}
-
 function formatDate(iso: string) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
@@ -108,85 +92,33 @@ function formatDate(iso: string) {
 // ── Design tokens ─────────────────────────────────────────────────────────
 
 const C = {
-  pageBg:    "#0f1117",
-  headerBg:  "#161a24",
-  white:     "#161a24",
-  cardBorder:"#1e2535",
-  ink:       "#e8eaf0",
-  inkMid:    "#c9ccd6",
-  gray:      "#9ca3af",
-  muted:     "#6b7280",
-  inputBg:   "#0f1117",
+  pageBg:     "#0f1117",
+  headerBg:   "#161a24",
+  white:      "#161a24",
+  cardBorder: "#1e2535",
+  ink:        "#e8eaf0",
+  inkMid:     "#c9ccd6",
+  gray:       "#9ca3af",
+  muted:      "#6b7280",
+  inputBg:    "#0f1117",
   inputBorder:"#2a3142",
-  blue:      "#3b82f6",
-  blueLight: "#0c1c32",
-  blueBorder:"#2563eb44",
-  green:     "#22c55e",
-  greenLight:"#052e16",
+  blue:       "#3b82f6",
+  blueLight:  "#0c1c32",
+  blueBorder: "#2563eb44",
+  green:      "#22c55e",
+  greenLight: "#052e16",
   greenBorder:"#16a34a44",
-  red:       "#ef4444",
-  redLight:  "#1c1010",
-  amber:     "#eab308",
-  amberLight:"#1c1b10",
-  purple:    "#a855f7",
-  purpleLight:"#1c1020",
-  tabBar:    "#161a24",
+  red:        "#ef4444",
+  redLight:   "#1c1010",
+  amber:      "#eab308",
+  amberLight: "#1c1b10",
+  tabBar:     "#161a24",
 };
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-function ProductRowsInput({ rows, onChange }: { rows: ProductRow[]; onChange: (r: ProductRow[]) => void }) {
-  function updateRow(id: string, field: keyof ProductRow, value: string) {
-    onChange(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
-  }
-  function removeRow(id: string) {
-    if (rows.length === 1) return;
-    onChange(rows.filter((r) => r.id !== id));
-  }
-
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label style={sLabel}>Products &amp; HSN Codes</label>
-      <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr 36px", gap: 8, marginBottom: 6 }}>
-        {["Product / Category", "HSN Code", ""].map((h, i) => (
-          <div key={i} style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</div>
-        ))}
-      </div>
-      {rows.map((row) => (
-        <div key={row.id} style={{ display: "grid", gridTemplateColumns: "3fr 2fr 36px", gap: 8, marginBottom: 8, alignItems: "center" }}>
-          <input
-            style={sInput}
-            placeholder="e.g. Cotton knitwear"
-            value={row.name}
-            onChange={(e) => updateRow(row.id, "name", e.target.value)}
-          />
-          <input
-            style={sInput}
-            placeholder="e.g. 6109.10"
-            value={row.hsn}
-            onChange={(e) => updateRow(row.id, "hsn", e.target.value)}
-          />
-          <button
-            type="button"
-            onClick={() => removeRow(row.id)}
-            disabled={rows.length === 1}
-            title="Remove"
-            style={{ border: "none", background: "none", cursor: rows.length === 1 ? "not-allowed" : "pointer", color: rows.length === 1 ? C.muted : C.red, fontSize: 18, fontWeight: 700, opacity: rows.length === 1 ? 0.3 : 1, padding: "4px 6px" }}
-          >
-            ×
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => onChange([...rows, newProductRow()])}
-        style={{ background: "none", border: "none", color: C.blue, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "6px 0", marginTop: 4 }}
-      >
-        + Add product
-      </button>
-    </div>
-  );
-}
+const COL_HEADERS = ["Product / Category", "HSN Code", "Country", "Amount (₹ lakh)", "Tariff Paid (₹ lakh)", "Date of Export", ""];
+const COL_GRID = "2.2fr 1fr 1.4fr 1.2fr 1.2fr 1.3fr 36px";
 
 function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: ExportRow[]) => void }) {
   function updateRow(id: string, field: keyof ExportRow, value: string) {
@@ -199,20 +131,32 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={sLabel}>Export History</label>
+      <label style={sLabel}>Export Records</label>
       <p style={{ fontSize: 13, color: C.gray, marginBottom: 12, marginTop: 4 }}>
-        Add each shipment — we&apos;ll analyse what you could have saved based on the rules in force on that date.
+        Each row is one shipment — product, destination, value, tariff paid, and date together.
       </p>
 
       {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr 1.4fr 36px", gap: 8, marginBottom: 6, paddingRight: 4 }}>
-        {["Country", "Amount (₹ lakh)", "Tariff Paid (₹ lakh)", "Date of Export", ""].map((h, i) => (
+      <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 6 }}>
+        {COL_HEADERS.map((h, i) => (
           <div key={i} style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</div>
         ))}
       </div>
 
       {rows.map((row) => (
-        <div key={row.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.4fr 1.4fr 36px", gap: 8, marginBottom: 8, alignItems: "center" }}>
+        <div key={row.id} style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 8, alignItems: "center" }}>
+          <input
+            style={sInput}
+            placeholder="e.g. Cotton knitwear"
+            value={row.product}
+            onChange={(e) => updateRow(row.id, "product", e.target.value)}
+          />
+          <input
+            style={sInput}
+            placeholder="e.g. 6109.10"
+            value={row.hsn}
+            onChange={(e) => updateRow(row.id, "hsn", e.target.value)}
+          />
           <select
             value={row.country}
             onChange={(e) => updateRow(row.id, "country", e.target.value)}
@@ -249,15 +193,11 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
             disabled={rows.length === 1}
             title="Remove row"
             style={{
-              border: "none",
-              background: "none",
+              border: "none", background: "none",
               cursor: rows.length === 1 ? "not-allowed" : "pointer",
               color: rows.length === 1 ? C.muted : C.red,
-              fontSize: 18,
-              fontWeight: 700,
-              lineHeight: 1,
-              opacity: rows.length === 1 ? 0.3 : 1,
-              padding: "4px 6px",
+              fontSize: 18, fontWeight: 700, lineHeight: 1,
+              opacity: rows.length === 1 ? 0.3 : 1, padding: "4px 6px",
             }}
           >
             ×
@@ -316,19 +256,17 @@ const sSubmitBtn = (disabled: boolean): React.CSSProperties => ({
 // ── Feature 1: Health Check ───────────────────────────────────────────────
 
 function HealthCheck({
-  company, setCompany, productRows, setProductRows, exportRows, setExportRows,
+  company, setCompany, exportRows, setExportRows,
 }: {
   company: string; setCompany: (v: string) => void;
-  productRows: ProductRow[]; setProductRows: (p: ProductRow[]) => void;
   exportRows: ExportRow[]; setExportRows: (r: ExportRow[]) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HealthCheckResult | null>(null);
   const [error, setError] = useState("");
 
-  const completeRows = exportRows.filter((r) => r.country && r.amount && r.tariffPaid && r.date);
-  const hasProducts = productRows.some((r) => r.name.trim());
-  const canSubmit = company.trim() && hasProducts && completeRows.length > 0;
+  const completeRows = exportRows.filter((r) => r.product && r.country && r.amount && r.tariffPaid && r.date);
+  const canSubmit = company.trim() && completeRows.length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -338,8 +276,7 @@ function HealthCheck({
       const data = await callIntel({
         action: "health_check",
         company,
-        products: productRows.filter((r) => r.name.trim()).map((r) => r.name),
-        exportRows: completeRows.map(({ country, amount, tariffPaid, date }) => ({ country, amount, tariffPaid, date })),
+        exportRows: completeRows.map(({ product, hsn, country, amount, tariffPaid, date }) => ({ product, hsn, country, amount, tariffPaid, date })),
       });
       setResult(data);
     } catch (err) {
@@ -349,7 +286,7 @@ function HealthCheck({
     }
   }
 
-  const borderColor = (saving: string) => {
+  const savingColor = (saving: string) => {
     const n = parseFloat(saving.replace(/[^0-9.]/g, ""));
     if (n > 5) return C.green;
     if (n > 0) return C.amber;
@@ -369,7 +306,6 @@ function HealthCheck({
           <input style={sInput} placeholder="e.g. Sri Murugan Exports Pvt Ltd" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
 
-        <ProductRowsInput rows={productRows} onChange={setProductRows} />
         <ExportRowsInput rows={exportRows} onChange={setExportRows} />
 
         <button type="submit" disabled={!canSubmit || loading} style={sSubmitBtn(!canSubmit || loading)}>
@@ -390,10 +326,14 @@ function HealthCheck({
 
           {/* Per-export cards */}
           {result.exports.map((exp, i) => (
-            <div key={i} style={{ borderLeft: `4px solid ${borderColor(exp.potentialSaving)}`, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderLeftWidth: 4, borderLeftColor: borderColor(exp.potentialSaving), borderRadius: 10, padding: "18px 20px", marginBottom: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <span style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>{exp.country}</span>
-                <span style={{ fontSize: 12, color: C.muted }}>{formatDate(exp.date)}</span>
+            <div key={i} style={{ borderLeft: `4px solid ${savingColor(exp.potentialSaving)}`, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderLeftWidth: 4, borderLeftColor: savingColor(exp.potentialSaving), borderRadius: 10, padding: "18px 20px", marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>
+                    {exp.product}{exp.hsn ? ` (${exp.hsn})` : ""} → {exp.country}
+                  </div>
+                </div>
+                <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap", marginLeft: 12 }}>{formatDate(exp.date)}</span>
               </div>
               <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 12 }}>
                 <div>
@@ -433,35 +373,33 @@ function HealthCheck({
   );
 }
 
-// ── Feature 2 & 3: Weekly Digest (fixed + date-aware) ────────────────────
+// ── Feature 2: Weekly Digest ──────────────────────────────────────────────
 
-function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { company: string; productRows: ProductRow[]; setProductRows: (p: ProductRow[]) => void; exportRows: ExportRow[] }) {
+function WeeklyDigest({ company, exportRows }: { company: string; exportRows: ExportRow[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
   const [fallbackMarkets, setFallbackMarkets] = useState("");
 
-  const pairs = getCountryDatePairs(exportRows);
-  const hasPairs = pairs.length > 0;
   const today = new Date().toISOString().slice(0, 10);
-  const hasProducts = productRows.some((r) => r.name.trim());
 
-  const canSubmit = !loading && company.trim() && hasProducts && (hasPairs || fallbackMarkets.trim());
+  // Rows with at least product + country (date optional — fallback to today)
+  const usableRows = exportRows.filter((r) => r.product.trim() && r.country);
+  const hasRows = usableRows.length > 0;
+
+  const canSubmit = !loading && company.trim() && (hasRows || fallbackMarkets.trim());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true); setError(""); setResult(null);
 
-    const countryDatePairs = hasPairs
-      ? pairs
-      : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ country, date: today }));
-
-    const products = productRows.filter((r) => r.name.trim()).map((r) => ({ name: r.name, hsn: r.hsn }));
+    const digestRows = hasRows
+      ? usableRows.map((r) => ({ product: r.product, hsn: r.hsn, country: r.country, date: r.date || today }))
+      : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ product: "Textile export", hsn: "", country, date: today }));
 
     try {
-      const data = await callIntel({ action: "weekly_digest", company, products, countryDatePairs });
-      // Normalise: ensure all three sections exist as arrays
+      const data = await callIntel({ action: "weekly_digest", company, exportRows: digestRows });
       setResult({
         urgent: Array.isArray(data.urgent) ? data.urgent : [],
         watch: Array.isArray(data.watch) ? data.watch : [],
@@ -476,17 +414,11 @@ function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { co
 
   function DigestSection({ type, label, items }: { type: "urgent" | "watch" | "opportunities"; label: string; items: DigestItem[] }) {
     const config = {
-      urgent:        { border: C.red,    bg: C.redLight,   textColor: C.red },
-      watch:         { border: C.amber,  bg: C.amberLight, textColor: C.amber },
-      opportunities: { border: C.green,  bg: C.greenLight, textColor: C.green },
+      urgent:        { border: C.red,   bg: C.redLight,   textColor: C.red },
+      watch:         { border: C.amber, bg: C.amberLight, textColor: C.amber },
+      opportunities: { border: C.green, bg: C.greenLight, textColor: C.green },
     };
     const c = config[type];
-
-    // Find reference date for a country
-    const refDate = (country: string) => {
-      const p = pairs.find((x) => x.country === country);
-      return p ? formatDate(p.date) : formatDate(today);
-    };
 
     return (
       <div style={{ marginBottom: 20 }}>
@@ -495,12 +427,12 @@ function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { co
           <div style={{ fontSize: 13, color: C.muted, fontStyle: "italic", padding: "10px 0" }}>Nothing to flag this week for your markets.</div>
         ) : (
           items.map((item, i) => {
-            const rd = item.referenceDate ? formatDate(item.referenceDate) : refDate(item.country);
+            const rd = item.referenceDate ? formatDate(item.referenceDate) : "";
             const tagParts = [
               item.product,
               item.hsn ? `HSN ${item.hsn}` : null,
               item.country,
-              `as of ${rd}`,
+              rd ? `as of ${rd}` : null,
             ].filter(Boolean).join(" · ");
             return (
               <div key={i} style={{ borderLeft: `3px solid ${c.border}`, backgroundColor: c.bg, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: 10 }}>
@@ -522,16 +454,15 @@ function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { co
         Personalised to your products and markets — anchored to your export dates.
       </p>
 
-      {/* Show what data is being used */}
-      {hasPairs ? (
-        <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: C.blue }}>
-          <strong>Using data from your Health Check:</strong>{" "}
-          {pairs.map((p) => `${p.country} (${formatDate(p.date)})`).join(", ")}
+      {hasRows ? (
+        <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.blue }}>
+          <strong>Using your export records:</strong>{" "}
+          {usableRows.map((r) => `${r.product}${r.hsn ? ` (${r.hsn})` : ""} → ${r.country}${r.date ? ` · ${formatDate(r.date)}` : ""}`).join(", ")}
         </div>
       ) : (
         <div style={{ marginBottom: 20 }}>
           <label style={sLabel}>Export Markets</label>
-          <p style={{ fontSize: 12, color: C.gray, marginBottom: 8 }}>Fill in the Health Check for date-aware results, or enter markets here.</p>
+          <p style={{ fontSize: 12, color: C.gray, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here for a general digest.</p>
           <input
             style={sInput}
             placeholder="e.g. UK, USA, Germany"
@@ -540,8 +471,6 @@ function WeeklyDigest({ company, productRows, setProductRows, exportRows }: { co
           />
         </div>
       )}
-
-      <ProductRowsInput rows={productRows} onChange={setProductRows} />
 
       <form onSubmit={handleSubmit}>
         <button type="submit" disabled={!canSubmit} style={sSubmitBtn(!canSubmit)}>
@@ -661,21 +590,20 @@ function ShipmentCheck() {
 export default function Home() {
   const [tab, setTab] = useState<"health" | "digest" | "shipment">("health");
   const [company, setCompany] = useState("");
-  const [productRows, setProductRows] = useState<ProductRow[]>([newProductRow()]);
   const [exportRows, setExportRows] = useState<ExportRow[]>([newRow()]);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: C.pageBg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: 1.6 }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input:focus, select:focus { border-color: #1c1917 !important; box-shadow: 0 0 0 3px rgba(28,25,23,0.08) !important; outline: none; }
+        input:focus, select:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important; outline: none; }
         button:hover:not(:disabled) { opacity: 0.88; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
       {/* Header */}
       <header style={{ backgroundColor: C.headerBg, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px" }}>
-        <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, color: C.white }}>
+        <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, color: C.ink }}>
           Trade<span style={{ color: "#60a5fa" }}>Intel</span>
         </div>
         <div style={{ fontSize: 13, color: "#a8a29e" }}>Trade intelligence for Indian textile exporters</div>
@@ -683,7 +611,7 @@ export default function Home() {
 
       {/* Hero */}
       <div style={{ textAlign: "center", padding: "52px 24px 40px", maxWidth: 680, margin: "0 auto" }}>
-        <div style={{ display: "inline-block", backgroundColor: "#e8f0fe", color: C.blue, border: `1px solid ${C.blueBorder}`, borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 600, letterSpacing: "0.3px", marginBottom: 20 }}>
+        <div style={{ display: "inline-block", backgroundColor: C.blueLight, color: C.blue, border: `1px solid ${C.blueBorder}`, borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 600, letterSpacing: "0.3px", marginBottom: 20 }}>
           Live Intelligence · No Login Required
         </div>
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: 40, fontWeight: 700, color: C.ink, lineHeight: 1.2, letterSpacing: "-0.5px", marginBottom: 16 }}>
@@ -695,7 +623,7 @@ export default function Home() {
       </div>
 
       {/* Main */}
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "0 24px 80px" }}>
+      <main style={{ maxWidth: 1060, margin: "0 auto", padding: "0 24px 80px" }}>
         {/* Tabs */}
         <div style={{ display: "flex", gap: 4, marginBottom: 28, backgroundColor: C.tabBar, padding: 5, borderRadius: 12 }}>
           {(["health", "digest", "shipment"] as const).map((t) => {
@@ -712,12 +640,11 @@ export default function Home() {
         {tab === "health" && (
           <HealthCheck
             company={company} setCompany={setCompany}
-            productRows={productRows} setProductRows={setProductRows}
             exportRows={exportRows} setExportRows={setExportRows}
           />
         )}
         {tab === "digest" && (
-          <WeeklyDigest company={company} productRows={productRows} setProductRows={setProductRows} exportRows={exportRows} />
+          <WeeklyDigest company={company} exportRows={exportRows} />
         )}
         {tab === "shipment" && <ShipmentCheck />}
       </main>

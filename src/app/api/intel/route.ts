@@ -2,24 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
-// Types used in prompts
-type ExportRowInput = { country: string; amount: string; tariffPaid: string; date: string; };
-type CountryDate = { country: string; date: string; };
+type UnifiedExportRow = {
+  product: string;
+  hsn: string;
+  country: string;
+  amount: string;
+  tariffPaid: string;
+  date: string;
+};
 
-function buildHealthCheckPrompt(company: string, products: string[], exportRows: ExportRowInput[]): string {
+function buildHealthCheckPrompt(company: string, exportRows: UnifiedExportRow[]): string {
   const rowsText = exportRows
     .map(
       (r, i) =>
-        `  Row ${i + 1}: Country=${r.country}, Date=${r.date}, Amount=₹${r.amount} lakh, Tariff Paid=₹${r.tariffPaid} lakh`
+        `  Row ${i + 1}: Product=${r.product}${r.hsn ? ` (HSN: ${r.hsn})` : ""}, Country=${r.country}, Date=${r.date}, Amount=₹${r.amount} lakh, Tariff Paid=₹${r.tariffPaid} lakh`
     )
     .join("\n");
 
   return `You are a trade intelligence analyst specialising in Indian textile exports.
 
 Company: ${company}
-Products: ${products.join(", ")}
 
-Export history:
+Export history (each row is one shipment — product, destination, value, tariff, date):
 ${rowsText}
 
 CRITICAL INSTRUCTION: Evaluate each export row using ONLY the tariff/FTA/regulatory rules that were in force AS OF THAT SPECIFIC EXPORT DATE. Do not apply rules that had not yet come into effect on the export date.
@@ -42,6 +46,8 @@ Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape
   "totalSavings": <number in lakh, sum of all potentialSaving values>,
   "exports": [
     {
+      "product": "<product name>",
+      "hsn": "<HSN code or empty string>",
       "country": "<country>",
       "date": "<date>",
       "amountExported": "₹<amount> lakh",
@@ -55,40 +61,24 @@ Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape
 }`;
 }
 
-function buildWeeklyDigestPrompt(
-  company: string,
-  products: { name: string; hsn: string }[],
-  countryDatePairs: CountryDate[]
-): string {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const productLines = products
-    .map((p) => `  - ${p.name}${p.hsn ? ` (HSN: ${p.hsn})` : ""}`)
+function buildWeeklyDigestPrompt(company: string, exportRows: UnifiedExportRow[]): string {
+  const rowLines = exportRows
+    .map((r) => `  - ${r.product}${r.hsn ? ` (HSN: ${r.hsn})` : ""} → ${r.country} (reference date: ${r.date})`)
     .join("\n");
-
-  let marketText: string;
-  if (countryDatePairs.length === 0) {
-    marketText = `Markets and reference dates:\n  - USA (reference date: ${today})\n  - UK (reference date: ${today})\n  - EU (reference date: ${today})`;
-  } else {
-    marketText = `Markets and reference dates:\n` + countryDatePairs
-      .map((p) => `  - ${p.country} (reference date: ${p.date})`)
-      .join("\n");
-  }
 
   return `You are a trade intelligence analyst specialising in Indian textile exports.
 
 Company: ${company}
 
-Products and HSN codes to analyse:
-${productLines}
+Export records to analyse (product → destination, as of the reference date):
+${rowLines}
 
-${marketText}
-
-CRITICAL INSTRUCTION: Only generate digest items that are specifically relevant to one of the HSN codes and country combinations listed above, as of that country's reference date. Do not include generic items — every item must map to a specific HSN code + country + date combination. Do not surface regulations that came into force after the reference date, and do not surface historical information irrelevant to the reference date.
+CRITICAL INSTRUCTION: Only generate digest items that are specifically relevant to one of the product+country+date combinations listed above. Every item must map to a specific product, HSN code (if provided), country, and reference date. Do not surface regulations that came into force after the reference date. Do not include generic items.
 
 Key regulatory timeline (apply strictly by date):
 - India-UK FTA duty-free: in force from 1 July 2025 ONLY
 - India-UAE CEPA: in force since May 2022
+- India-Australia ECTA: in force from December 2022
 - EU CBAM carbon reporting: applicable from Q1 2026 ONLY
 - US tariff on Indian textiles: ~63.9% effective rate through 2025
 - RoDTEP scheme: ongoing from January 2021
@@ -96,7 +86,7 @@ Key regulatory timeline (apply strictly by date):
 Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
 {
   "urgent": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail specific to the HSN+country>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
+    { "title": "<short headline>", "detail": "<2-3 sentence detail specific to the product+country>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
   ],
   "watch": [
     { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
@@ -171,19 +161,17 @@ export async function POST(req: NextRequest) {
     let prompt: string;
 
     if (action === "health_check") {
-      const { company, products, exportRows } = body as {
+      const { company, exportRows } = body as {
         company: string;
-        products: string[];
-        exportRows: ExportRowInput[];
+        exportRows: UnifiedExportRow[];
       };
-      prompt = buildHealthCheckPrompt(company, products, exportRows);
+      prompt = buildHealthCheckPrompt(company, exportRows);
     } else if (action === "weekly_digest") {
-      const { company, products, countryDatePairs } = body as {
+      const { company, exportRows } = body as {
         company: string;
-        products: { name: string; hsn: string }[];
-        countryDatePairs: CountryDate[];
+        exportRows: UnifiedExportRow[];
       };
-      prompt = buildWeeklyDigestPrompt(company, products, countryDatePairs);
+      prompt = buildWeeklyDigestPrompt(company, exportRows);
     } else if (action === "shipment_check") {
       const { hsn, destination, value } = body as {
         hsn: string;

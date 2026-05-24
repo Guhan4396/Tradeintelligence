@@ -4,12 +4,6 @@ import { useState } from "react";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
-const TEXTILE_PRODUCTS = [
-  "Cotton T-shirts", "Cotton Yarn", "Knitwear", "Woven Fabric",
-  "Synthetic Fabric", "Readymade Garments", "Home Textiles", "Denim",
-  "Technical Textiles", "Woollen Garments", "Silk Fabric", "Embroidery",
-];
-
 const MARKETS = [
   "USA", "UK", "Germany", "France", "Italy", "UAE", "Netherlands",
   "Belgium", "Spain", "Australia", "Canada", "Japan", "Saudi Arabia",
@@ -101,62 +95,43 @@ function formatDate(iso: string) {
 // ── Design tokens ─────────────────────────────────────────────────────────
 
 const C = {
-  pageBg:    "#faf8f4",
-  headerBg:  "#1c1917",
-  white:     "#ffffff",
-  cardBorder:"#e8e2d9",
-  ink:       "#1c1917",
-  inkMid:    "#44403c",
-  gray:      "#78716c",
-  muted:     "#a8a29e",
-  inputBg:   "#f5f1eb",
-  inputBorder:"#d6cfc4",
-  blue:      "#2563eb",
-  blueLight: "#eff6ff",
-  blueBorder:"#bfdbfe",
-  green:     "#16a34a",
-  greenLight:"#f0fdf4",
-  greenBorder:"#bbf7d0",
-  red:       "#dc2626",
-  redLight:  "#fef2f2",
-  amber:     "#d97706",
-  amberLight:"#fffbeb",
-  purple:    "#9333ea",
-  purpleLight:"#faf5ff",
-  tabBar:    "#ede8e0",
+  pageBg:    "#0f1117",
+  headerBg:  "#161a24",
+  white:     "#161a24",
+  cardBorder:"#1e2535",
+  ink:       "#e8eaf0",
+  inkMid:    "#c9ccd6",
+  gray:      "#9ca3af",
+  muted:     "#6b7280",
+  inputBg:   "#0f1117",
+  inputBorder:"#2a3142",
+  blue:      "#3b82f6",
+  blueLight: "#0c1c32",
+  blueBorder:"#2563eb44",
+  green:     "#22c55e",
+  greenLight:"#052e16",
+  greenBorder:"#16a34a44",
+  red:       "#ef4444",
+  redLight:  "#1c1010",
+  amber:     "#eab308",
+  amberLight:"#1c1b10",
+  purple:    "#a855f7",
+  purpleLight:"#1c1020",
+  tabBar:    "#161a24",
 };
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-function ProductChips({ selected, onChange }: { selected: string[]; onChange: (p: string[]) => void }) {
+function ProductField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={sLabel}>Products / Categories</label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-        {TEXTILE_PRODUCTS.map((p) => {
-          const on = selected.includes(p);
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onChange(on ? selected.filter((x) => x !== p) : [...selected, p])}
-              style={{
-                padding: "5px 14px",
-                borderRadius: 20,
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: "pointer",
-                border: `1px solid ${on ? C.blue : C.inputBorder}`,
-                backgroundColor: on ? C.blue : C.white,
-                color: on ? C.white : C.gray,
-                transition: "all 0.12s",
-              }}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
+      <label style={sLabel}>Products / HSN Codes</label>
+      <input
+        style={sInput}
+        placeholder="e.g. Cotton T-shirts, Knitwear, HSN 6109"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }
@@ -292,7 +267,7 @@ function HealthCheck({
   company, setCompany, products, setProducts, exportRows, setExportRows,
 }: {
   company: string; setCompany: (v: string) => void;
-  products: string[]; setProducts: (p: string[]) => void;
+  products: string; setProducts: (p: string) => void;
   exportRows: ExportRow[]; setExportRows: (r: ExportRow[]) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -300,7 +275,7 @@ function HealthCheck({
   const [error, setError] = useState("");
 
   const completeRows = exportRows.filter((r) => r.country && r.amount && r.tariffPaid && r.date);
-  const canSubmit = company.trim() && products.length > 0 && completeRows.length > 0;
+  const canSubmit = company.trim() && products.trim() && completeRows.length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -310,7 +285,7 @@ function HealthCheck({
       const data = await callIntel({
         action: "health_check",
         company,
-        products,
+        products: products.split(",").map((s) => s.trim()).filter(Boolean),
         exportRows: completeRows.map(({ country, amount, tariffPaid, date }) => ({ country, amount, tariffPaid, date })),
       });
       setResult(data);
@@ -341,7 +316,7 @@ function HealthCheck({
           <input style={sInput} placeholder="e.g. Sri Murugan Exports Pvt Ltd" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
 
-        <ProductChips selected={products} onChange={setProducts} />
+        <ProductField value={products} onChange={setProducts} />
         <ExportRowsInput rows={exportRows} onChange={setExportRows} />
 
         <button type="submit" disabled={!canSubmit || loading} style={sSubmitBtn(!canSubmit || loading)}>
@@ -407,7 +382,7 @@ function HealthCheck({
 
 // ── Feature 2 & 3: Weekly Digest (fixed + date-aware) ────────────────────
 
-function WeeklyDigest({ company, products, exportRows }: { company: string; products: string[]; exportRows: ExportRow[] }) {
+function WeeklyDigest({ company, products, exportRows }: { company: string; products: string; exportRows: ExportRow[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
@@ -417,7 +392,7 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
   const hasPairs = pairs.length > 0;
   const today = new Date().toISOString().slice(0, 10);
 
-  const canSubmit = !loading && company.trim() && products.length > 0 && (hasPairs || fallbackMarkets.trim());
+  const canSubmit = !loading && company.trim() && products.trim() && (hasPairs || fallbackMarkets.trim());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -429,7 +404,7 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
       : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ country, date: today }));
 
     try {
-      const data = await callIntel({ action: "weekly_digest", company, products, countryDatePairs });
+      const data = await callIntel({ action: "weekly_digest", company, products: products.split(",").map((s) => s.trim()).filter(Boolean), countryDatePairs });
       // Normalise: ensure all three sections exist as arrays
       setResult({
         urgent: Array.isArray(data.urgent) ? data.urgent : [],
@@ -505,17 +480,13 @@ function WeeklyDigest({ company, products, exportRows }: { company: string; prod
         </div>
       )}
 
-      {/* Products read-only chips */}
+      {/* Products read-only */}
       <div style={{ marginBottom: 20 }}>
         <label style={sLabel}>Products</label>
-        {products.length === 0 ? (
-          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Select products in the Health Check tab first.</p>
+        {!products.trim() ? (
+          <p style={{ fontSize: 13, color: C.muted, fontStyle: "italic" }}>Enter products in the Health Check tab first.</p>
         ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {products.map((p) => (
-              <span key={p} style={{ padding: "4px 12px", borderRadius: 20, fontSize: 13, backgroundColor: C.blue, color: C.white, fontWeight: 500 }}>{p}</span>
-            ))}
-          </div>
+          <div style={{ fontSize: 14, color: C.inkMid, backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`, borderRadius: 8, padding: "10px 12px" }}>{products}</div>
         )}
       </div>
 
@@ -637,7 +608,7 @@ function ShipmentCheck() {
 export default function Home() {
   const [tab, setTab] = useState<"health" | "digest" | "shipment">("health");
   const [company, setCompany] = useState("");
-  const [products, setProducts] = useState<string[]>([]);
+  const [products, setProducts] = useState("");
   const [exportRows, setExportRows] = useState<ExportRow[]>([newRow()]);
 
   return (

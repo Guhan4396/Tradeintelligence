@@ -130,6 +130,10 @@ Use real tariff data where possible. For US destination, apply the current ~26-6
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY is not set in environment variables" }, { status: 500 });
+  }
+
   try {
     const body: IntelRequest = await req.json();
 

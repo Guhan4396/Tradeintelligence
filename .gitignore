@@ -7,6 +7,7 @@ node_modules/
 .next/
 out/
 dist/
+tsconfig.tsbuildinfo
 
 # env files — never commit these
 .env

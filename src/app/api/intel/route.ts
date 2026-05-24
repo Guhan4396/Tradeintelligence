@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 type HealthCheckRequest = {
@@ -159,7 +161,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data);
   } catch (err) {
-    console.error("Intel API error:", err);
-    return NextResponse.json({ error: "Failed to generate intelligence" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Intel API error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

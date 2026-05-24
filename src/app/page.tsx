@@ -473,8 +473,9 @@ async function callIntel(payload: Record<string, string>) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || `Request failed: ${res.status}`);
+  return json;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────
@@ -545,8 +546,8 @@ function HealthCheck({ profile, setProfile }: { profile: Profile; setProfile: (p
         markets: profile.markets,
       });
       setResult(data);
-    } catch {
-      setError("Could not generate report. Please check your connection and try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not generate report. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -607,8 +608,8 @@ function WeeklyDigest({ profile, setProfile }: { profile: Profile; setProfile: (
         markets: profile.markets,
       });
       setResult(data);
-    } catch {
-      setError("Could not generate digest. Please check your connection and try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not generate digest. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -682,8 +683,8 @@ function ShipmentCheck() {
     try {
       const data = await callIntel({ action: "shipment_check", hsn, destination, value });
       setResult(data);
-    } catch {
-      setError("Could not check shipment. Please check your connection and try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not check shipment. Please try again.");
     } finally {
       setLoading(false);
     }

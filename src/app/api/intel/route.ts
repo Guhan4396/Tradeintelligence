@@ -11,11 +11,32 @@ type UnifiedExportRow = {
   date: string;
 };
 
+type SavingsItem = { label: string; amount: number; basis: string };
+
+type HealthExportRaw = {
+  product: string;
+  hsn: string;
+  country: string;
+  date: string;
+  amountExported: number;
+  tariffPaid: number;
+  potentialSaving: number;
+  savingsBreakdown: SavingsItem[];
+  loophole: string;
+  fix: string;
+};
+
+type HealthResultRaw = {
+  totalSavings: number;
+  exports: HealthExportRaw[];
+  additionalFindings: string[];
+};
+
 function buildHealthCheckPrompt(company: string, exportRows: UnifiedExportRow[]): string {
   const rowsText = exportRows
     .map(
       (r, i) =>
-        `  Row ${i + 1}: Product=${r.product}${r.hsn ? ` (HSN: ${r.hsn})` : ""}, Country=${r.country}, Date=${r.date}, Amount=₹${r.amount} lakh, Tariff Paid=₹${r.tariffPaid} lakh`
+        `  Row ${i + 1}: Product=${r.product}${r.hsn ? ` (HSN: ${r.hsn})` : ""}, Country=${r.country}, Date=${r.date}, Amount=₹${r.amount}, Tariff Paid=₹${r.tariffPaid}`
     )
     .join("\n");
 
@@ -23,10 +44,12 @@ function buildHealthCheckPrompt(company: string, exportRows: UnifiedExportRow[])
 
 Company: ${company}
 
-Export history (each row is one shipment — product, destination, value, tariff, date):
+Export history (each row is one shipment — product, destination, value in rupees, tariff paid in rupees, date):
 ${rowsText}
 
 CRITICAL INSTRUCTION: Evaluate each export row using ONLY the tariff/FTA/regulatory rules that were in force AS OF THAT SPECIFIC EXPORT DATE. Do not apply rules that had not yet come into effect on the export date.
+
+AMOUNT INSTRUCTIONS: All amounts are in Indian rupees. Never use the word "lakh" or "crore". Express every figure as a plain integer rupee amount (e.g. 1346750, not "₹13.46 lakh").
 
 Key regulatory timeline (apply strictly by date):
 - India-UK FTA duty-free: in force from 1 July 2025 ONLY — do NOT apply for any export dated before 1 July 2025
@@ -36,28 +59,30 @@ Key regulatory timeline (apply strictly by date):
 - US tariff on Indian textiles: escalated through 2025, approximately 63.9% effective rate
 - RoDTEP scheme: ongoing from January 2021 — applicable for exports from January 2021 onwards
 
-For each row, identify:
-- Whether the exporter could have used an FTA or scheme that was available on that date to reduce duty
-- The actual potential saving in ₹ lakh
-- A concise loophole explanation and a specific fix
+For each row, build a savingsBreakdown: a list of individual saving line items. Each item must have a concrete basis (a named scheme, a specific rate, a rule) that was valid on the export date. Do NOT invent numbers for schemes you are not confident applied on that date.
+
+ARITHMETIC RULE: Set potentialSaving to the EXACT arithmetic sum of the savingsBreakdown amounts. Do not report a total that differs from the sum. Every rupee in the total must map to a named line item.
 
 Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
 {
-  "totalSavings": <number in lakh, sum of all potentialSaving values>,
+  "totalSavings": <integer — sum of all rows' potentialSaving>,
   "exports": [
     {
       "product": "<product name>",
       "hsn": "<HSN code or empty string>",
       "country": "<country>",
-      "date": "<date>",
-      "amountExported": "₹<amount> lakh",
-      "tariffPaid": "₹<tariffPaid> lakh",
-      "potentialSaving": "₹<number> lakh",
-      "loophole": "<why this saving was available>",
-      "fix": "<specific actionable fix>"
+      "date": "<YYYY-MM-DD>",
+      "amountExported": <integer rupees>,
+      "tariffPaid": <integer rupees>,
+      "potentialSaving": <integer rupees — exact sum of savingsBreakdown amounts>,
+      "savingsBreakdown": [
+        { "label": "<scheme or rule name>", "amount": <integer rupees>, "basis": "<why this applies and on what date>" }
+      ],
+      "loophole": "<why this saving was available — no lakh/crore words>",
+      "fix": "<specific actionable fix — no lakh/crore words>"
     }
   ],
-  "additionalFindings": ["<finding 1>", "<finding 2>"]
+  "additionalFindings": ["<finding — no lakh/crore words>"]
 }`;
 }
 
@@ -145,6 +170,26 @@ async function callClaude(prompt: string, apiKey: string): Promise<string> {
   return data.content[0].text as string;
 }
 
+function enforceHealthArithmetic(data: HealthResultRaw): HealthResultRaw {
+  if (!Array.isArray(data.exports)) return data;
+
+  let runningTotal = 0;
+  for (const exp of data.exports) {
+    if (Array.isArray(exp.savingsBreakdown) && exp.savingsBreakdown.length > 0) {
+      const computed = exp.savingsBreakdown.reduce(
+        (sum, item) => sum + (Number(item.amount) || 0),
+        0
+      );
+      exp.potentialSaving = computed;
+    } else {
+      exp.potentialSaving = Number(exp.potentialSaving) || 0;
+    }
+    runningTotal += exp.potentialSaving;
+  }
+  data.totalSavings = runningTotal;
+  return data;
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -194,6 +239,10 @@ export async function POST(req: NextRequest) {
         { error: "Failed to parse AI response. Please try again." },
         { status: 500 }
       );
+    }
+
+    if (action === "health_check") {
+      data = enforceHealthArithmetic(data as HealthResultRaw);
     }
 
     return NextResponse.json(data);

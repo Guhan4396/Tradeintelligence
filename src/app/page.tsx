@@ -22,14 +22,17 @@ type ExportRow = {
   date: string;
 };
 
+type SavingsItem = { label: string; amount: number; basis: string };
+
 type HealthExport = {
   product: string;
   hsn: string;
   country: string;
   date: string;
-  amountExported: string;
-  tariffPaid: string;
-  potentialSaving: string;
+  amountExported: number;
+  tariffPaid: number;
+  potentialSaving: number;
+  savingsBreakdown: SavingsItem[];
   loophole: string;
   fix: string;
 };
@@ -89,6 +92,24 @@ function formatDate(iso: string) {
   return `${d} ${months[parseInt(m) - 1]} ${y}`;
 }
 
+// Indian-style comma grouping: xx,xx,xxx (last group 3 digits, rest groups of 2)
+function formatRupees(n: number): string {
+  const rounded = Math.round(n);
+  if (isNaN(rounded)) return "₹0";
+  const s = rounded.toString();
+  if (s.length <= 3) return `₹${s}`;
+  const last3 = s.slice(-3);
+  const rest = s.slice(0, -3);
+  const groups: string[] = [];
+  let r = rest;
+  while (r.length > 2) {
+    groups.unshift(r.slice(-2));
+    r = r.slice(0, -2);
+  }
+  if (r) groups.unshift(r);
+  return `₹${groups.join(",")},${last3}`;
+}
+
 // ── Design tokens ─────────────────────────────────────────────────────────
 
 const C = {
@@ -117,7 +138,7 @@ const C = {
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-const COL_HEADERS = ["Product / Category", "HSN Code", "Country", "Amount (₹ lakh)", "Tariff Paid (₹ lakh)", "Date of Export", ""];
+const COL_HEADERS = ["Product / Category", "HSN Code", "Country", "Amount (₹)", "Tariff Paid (₹)", "Date of Export", ""];
 const COL_GRID = "2.2fr 1fr 1.4fr 1.2fr 1.2fr 1.3fr 36px";
 
 function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: ExportRow[]) => void }) {
@@ -133,7 +154,7 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
     <div style={{ marginBottom: 20 }}>
       <label style={sLabel}>Export Records</label>
       <p style={{ fontSize: 13, color: C.gray, marginBottom: 12, marginTop: 4 }}>
-        Each row is one shipment — product, destination, value, tariff paid, and date together.
+        Each row is one shipment. Enter rupee amounts (e.g. 2500000 for ₹25 lakh).
       </p>
 
       {/* Column headers */}
@@ -168,7 +189,7 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
           <input
             type="number"
             min="0"
-            placeholder="e.g. 25"
+            placeholder="e.g. 2500000"
             value={row.amount}
             onChange={(e) => updateRow(row.id, "amount", e.target.value)}
             style={sInput}
@@ -176,7 +197,7 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
           <input
             type="number"
             min="0"
-            placeholder="e.g. 5"
+            placeholder="e.g. 125000"
             value={row.tariffPaid}
             onChange={(e) => updateRow(row.id, "tariffPaid", e.target.value)}
             style={sInput}
@@ -286,10 +307,9 @@ function HealthCheck({
     }
   }
 
-  const savingColor = (saving: string) => {
-    const n = parseFloat(saving.replace(/[^0-9.]/g, ""));
-    if (n > 5) return C.green;
-    if (n > 0) return C.amber;
+  const savingColor = (saving: number) => {
+    if (saving > 500000) return C.green;
+    if (saving > 0) return C.amber;
     return C.muted;
   };
 
@@ -320,7 +340,7 @@ function HealthCheck({
           {/* Hero savings */}
           <div style={{ backgroundColor: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: "20px 24px", textAlign: "center", marginBottom: 28 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Total Recoverable Savings</div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 700, color: C.green, letterSpacing: "-0.5px" }}>₹{result.totalSavings} lakh</div>
+            <div style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 700, color: C.green, letterSpacing: "-0.5px" }}>{formatRupees(result.totalSavings)}</div>
             <div style={{ fontSize: 13, color: C.gray, marginTop: 6 }}>Across {result.exports.length} export{result.exports.length !== 1 ? "s" : ""} analysed</div>
           </div>
 
@@ -328,27 +348,48 @@ function HealthCheck({
           {result.exports.map((exp, i) => (
             <div key={i} style={{ borderLeft: `4px solid ${savingColor(exp.potentialSaving)}`, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderLeftWidth: 4, borderLeftColor: savingColor(exp.potentialSaving), borderRadius: 10, padding: "18px 20px", marginBottom: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>
-                    {exp.product}{exp.hsn ? ` (${exp.hsn})` : ""} → {exp.country}
-                  </div>
+                <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>
+                  {exp.product}{exp.hsn ? ` (${exp.hsn})` : ""} → {exp.country}
                 </div>
                 <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap", marginLeft: 12 }}>{formatDate(exp.date)}</span>
               </div>
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 12 }}>
+
+              {/* Summary figures */}
+              <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Exported</div>
-                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{exp.amountExported}</div>
+                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{formatRupees(exp.amountExported)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Tariff Paid</div>
-                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{exp.tariffPaid}</div>
+                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{formatRupees(exp.tariffPaid)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, color: C.green, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Potential Saving</div>
-                  <div style={{ fontSize: 14, color: C.green, fontWeight: 700 }}>{exp.potentialSaving}</div>
+                  <div style={{ fontSize: 16, color: C.green, fontWeight: 700 }}>{formatRupees(exp.potentialSaving)}</div>
                 </div>
               </div>
+
+              {/* Savings breakdown */}
+              {exp.savingsBreakdown?.length > 0 && (
+                <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "12px 14px", marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 8 }}>Savings Breakdown</div>
+                  {exp.savingsBreakdown.map((item, j) => (
+                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.cardBorder}` : "none" }}>
+                      <div>
+                        <div style={{ fontSize: 13, color: C.inkMid, fontWeight: 600 }}>{item.label}</div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{item.basis}</div>
+                      </div>
+                      <div style={{ fontSize: 13, color: C.green, fontWeight: 700, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, marginTop: 4, borderTop: `1px solid ${C.inputBorder}` }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>Total</div>
+                    <div style={{ fontSize: 14, color: C.green, fontWeight: 700 }}>{formatRupees(exp.potentialSaving)}</div>
+                  </div>
+                </div>
+              )}
+
               <p style={{ fontSize: 13, color: C.gray, fontStyle: "italic", marginBottom: 10 }}>{exp.loophole}</p>
               <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.blue }}>
                 → {exp.fix}
@@ -383,7 +424,6 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // Rows with at least product + country (date optional — fallback to today)
   const usableRows = exportRows.filter((r) => r.product.trim() && r.country);
   const hasRows = usableRows.length > 0;
 

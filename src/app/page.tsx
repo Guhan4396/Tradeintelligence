@@ -117,12 +117,12 @@ const C = {
   inputBg:     "#0f1011",
   border:      "#1a1a1c",
   inputBorder: "#1f2023",
-  text:        "#e2e2e2",
-  textMid:     "#9ca3af",
-  textMuted:   "#6b7280",
-  textDim:     "#4a4b52",
-  textFaint:   "#3d3e45",
-  textGhost:   "#2d2e33",
+  text:        "#f0f0f0",
+  textMid:     "#c0c4ce",
+  textMuted:   "#9ca3af",
+  textDim:     "#7a8290",
+  textFaint:   "#6b7280",
+  textGhost:   "#4a5568",
   accent:      "#5e6ad2",
   accentHover: "#6b77e0",
   green:       "#22c55e",
@@ -143,8 +143,8 @@ const sInput: React.CSSProperties = {
   background: C.inputBg,
   border: `1px solid ${C.inputBorder}`,
   borderRadius: 6,
-  padding: "8px 12px",
-  fontSize: 13,
+  padding: "9px 12px",
+  fontSize: 14,
   color: C.text,
   fontFamily: "inherit",
   boxSizing: "border-box",
@@ -153,9 +153,9 @@ const sInput: React.CSSProperties = {
 
 const sLabel: React.CSSProperties = {
   display: "block",
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 500,
-  color: C.textDim,
+  color: C.textMuted,
   letterSpacing: "0.04em",
   textTransform: "uppercase",
   marginBottom: 6,
@@ -166,10 +166,10 @@ const sRunBtn = (disabled: boolean): React.CSSProperties => ({
   background: disabled ? C.inputBorder : C.accent,
   border: "none",
   borderRadius: 7,
-  padding: "10px",
-  fontSize: 13,
+  padding: "11px",
+  fontSize: 14,
   fontWeight: 500,
-  color: disabled ? C.textDim : "#fff",
+  color: disabled ? C.textMuted : "#fff",
   cursor: disabled ? "not-allowed" : "pointer",
   fontFamily: "inherit",
   marginTop: 28,
@@ -192,14 +192,14 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
 
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>
         Export records
       </div>
 
       {/* Column headers */}
       <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 6, padding: "0 2px" }}>
         {COL_LABELS.map((h, i) => (
-          <div key={i} style={{ fontSize: 10.5, fontWeight: 500, color: C.textGhost, letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</div>
+          <div key={i} style={{ fontSize: 11.5, fontWeight: 500, color: C.textFaint, letterSpacing: "0.04em", textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
 
@@ -232,7 +232,7 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
       >
         + Add shipment
       </button>
-      <p style={{ fontSize: 11.5, color: C.textGhost, marginTop: 6, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: C.textFaint, marginTop: 8, lineHeight: 1.5 }}>
         Rupee amounts only — e.g. 2500000 for ₹25 lakh.
       </p>
     </div>
@@ -246,8 +246,8 @@ function Spinner() {
 function InfoStrip({ text }: { text: React.ReactNode }) {
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 10, background: C.cardBg }}>
-      <span style={{ color: C.accent, fontSize: 13, marginTop: 1, flexShrink: 0 }}>↗</span>
-      <div style={{ fontSize: 12.5, color: C.textDim, lineHeight: 1.6 }}>{text}</div>
+      <span style={{ color: C.accent, fontSize: 14, marginTop: 2, flexShrink: 0 }}>↗</span>
+      <div style={{ fontSize: 14, color: C.textMid, lineHeight: 1.65 }}>{text}</div>
     </div>
   );
 }
@@ -347,16 +347,16 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
               <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 10.5, color: C.textFaint, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Exported</div>
-                  <div style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.amountExported)}</div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Exported</div>
+                  <div style={{ fontSize: 14, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.amountExported)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10.5, color: C.textFaint, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Tariff paid</div>
-                  <div style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.tariffPaid)}</div>
+                  <div style={{ fontSize: 11.5, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Tariff paid</div>
+                  <div style={{ fontSize: 14, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.tariffPaid)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10.5, color: C.green, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Potential saving</div>
-                  <div style={{ fontSize: 15, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
+                  <div style={{ fontSize: 11.5, color: C.green, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Potential saving</div>
+                  <div style={{ fontSize: 16, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
                 </div>
               </div>
 
@@ -364,23 +364,23 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
               {exp.savingsBreakdown?.length > 0 && (
                 <div style={{ background: C.pageBg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px", marginBottom: 12 }}>
                   {exp.savingsBreakdown.map((item, j) => (
-                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "5px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.border}` : "none" }}>
                       <div>
-                        <div style={{ fontSize: 12.5, color: C.textMid, fontWeight: 500 }}>{item.label}</div>
-                        <div style={{ fontSize: 11, color: C.textFaint, marginTop: 1 }}>{item.basis}</div>
+                        <div style={{ fontSize: 13.5, color: C.textMid, fontWeight: 500 }}>{item.label}</div>
+                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{item.basis}</div>
                       </div>
-                      <div style={{ fontSize: 12.5, color: C.green, fontWeight: 600, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
+                      <div style={{ fontSize: 13.5, color: C.green, fontWeight: 600, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
                     </div>
                   ))}
                   <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 7, marginTop: 4, borderTop: `1px solid ${C.inputBorder}` }}>
-                    <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total</div>
-                    <div style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em" }}>Total</div>
+                    <div style={{ fontSize: 14, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
                   </div>
                 </div>
               )}
 
-              <p style={{ fontSize: 12.5, color: C.textDim, fontStyle: "italic", marginBottom: 10, lineHeight: 1.55 }}>{exp.loophole}</p>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", background: "#080d17", border: `1px solid #0e1a2e`, borderRadius: 6, fontSize: 12.5, color: "#5e88c4", lineHeight: 1.55 }}>
+              <p style={{ fontSize: 13.5, color: C.textMuted, fontStyle: "italic", marginBottom: 10, lineHeight: 1.6 }}>{exp.loophole}</p>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#080d17", border: `1px solid #0e1a2e`, borderRadius: 6, fontSize: 14, color: "#7a9fd4", lineHeight: 1.65 }}>
                 <span style={{ flexShrink: 0 }}>↗</span>
                 <span>{exp.fix}</span>
               </div>
@@ -389,9 +389,9 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
           {result.additionalFindings?.length > 0 && (
             <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Additional findings</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Additional findings</div>
               {result.additionalFindings.map((f, i) => (
-                <div key={i} style={{ fontSize: 12.5, color: C.textDim, padding: "10px 14px", background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 6, marginBottom: 8, lineHeight: 1.6 }}>{f}</div>
+                <div key={i} style={{ fontSize: 14, color: C.textMid, padding: "12px 16px", background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 6, marginBottom: 8, lineHeight: 1.65 }}>{f}</div>
               ))}
             </div>
           )}
@@ -447,14 +447,14 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
     const tag = [item.product, item.hsn ? `HSN ${item.hsn}` : null, item.country, rd ? `as of ${rd}` : null].filter(Boolean).join(" · ");
 
     return (
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 7, border: `1px solid ${cfg.border}`, background: cfg.bg, marginBottom: 8, lineHeight: 1.55 }}>
-        <span style={{ flexShrink: 0, color: cfg.iconColor, fontSize: 13, marginTop: 1 }}>{cfg.icon}</span>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 7, border: `1px solid ${cfg.border}`, background: cfg.bg, marginBottom: 8, lineHeight: 1.65 }}>
+        <span style={{ flexShrink: 0, color: cfg.iconColor, fontSize: 15, marginTop: 1 }}>{cfg.icon}</span>
         <div>
-          <div style={{ fontSize: 12.5, color: cfg.textColor }}>
+          <div style={{ fontSize: 14, color: cfg.textColor }}>
             <strong style={{ color: cfg.strongColor, fontWeight: 500 }}>{item.title} — </strong>
             {item.detail}
           </div>
-          {tag && <div style={{ fontSize: 10.5, color: C.textGhost, marginTop: 5, letterSpacing: "0.02em" }}>{tag}</div>}
+          {tag && <div style={{ fontSize: 12, color: C.textFaint, marginTop: 6, letterSpacing: "0.02em" }}>{tag}</div>}
         </div>
       </div>
     );
@@ -465,14 +465,14 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
       <InfoStrip text={<><strong style={{ color: C.textMid }}>Weekly digest:</strong> Regulatory changes, new FTA implementation dates, and tariff shifts relevant to your exact products and markets. Anchored to your export dates.</>} />
 
       {hasRows ? (
-        <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 12.5, color: C.textDim, background: C.cardBg, lineHeight: 1.6 }}>
+        <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 14, color: C.textMuted, background: C.cardBg, lineHeight: 1.65 }}>
           <strong style={{ color: C.textMid, fontWeight: 500 }}>Using your export records:</strong>{" "}
           {usableRows.map((r) => `${r.product}${r.hsn ? ` (${r.hsn})` : ""} → ${r.country}${r.date ? ` · ${formatDate(r.date)}` : ""}`).join(", ")}
         </div>
       ) : (
         <div style={{ marginBottom: 24 }}>
           <label style={sLabel}>Export markets</label>
-          <p style={{ fontSize: 11.5, color: C.textGhost, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here.</p>
+          <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here.</p>
           <input style={sInput} placeholder="e.g. UK, USA, Germany" value={fallbackMarkets} onChange={(e) => setFallbackMarkets(e.target.value)} />
         </div>
       )}
@@ -491,19 +491,19 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
 
           {result.urgent.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.amber, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Urgent — act now</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.amber, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Urgent — act now</div>
               {result.urgent.map((item, i) => <AlertItem key={i} item={item} variant="warn" />)}
             </div>
           )}
           {result.watch.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.accent, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Watch — monitor closely</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Watch — monitor closely</div>
               {result.watch.map((item, i) => <AlertItem key={i} item={item} variant="info" />)}
             </div>
           )}
           {result.opportunities.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.green, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Opportunities</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.green, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Opportunities</div>
               {result.opportunities.map((item, i) => <AlertItem key={i} item={item} variant="green" />)}
             </div>
           )}
@@ -569,21 +569,21 @@ function ShipmentCheck() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
             <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Tariff rate</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Tariff rate</div>
               <div style={{ fontSize: 22, fontWeight: 600, color: C.red, letterSpacing: "-0.03em" }}>{result.tariff_rate}</div>
             </div>
             <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Estimated duty</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Estimated duty</div>
               <div style={{ fontSize: 22, fontWeight: 600, color: C.amber, letterSpacing: "-0.03em" }}>{result.estimated_duty}</div>
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Required documents</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Required documents</div>
             <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
               {result.documents?.map((doc, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: i < result.documents.length - 1 ? `1px solid ${C.border}` : "none", fontSize: 13, color: C.textMid }}>
-                  <span style={{ color: C.green, fontSize: 11, fontWeight: 700 }}>✓</span>{doc}
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderBottom: i < result.documents.length - 1 ? `1px solid ${C.border}` : "none", fontSize: 14, color: C.textMid }}>
+                  <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>✓</span>{doc}
                 </div>
               ))}
             </div>
@@ -591,14 +591,14 @@ function ShipmentCheck() {
 
           {result.port_issues && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Port &amp; customs notes</div>
-              <div style={{ fontSize: 12.5, color: C.textDim, lineHeight: 1.6 }}>{result.port_issues}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Port &amp; customs notes</div>
+              <div style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65 }}>{result.port_issues}</div>
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 7, border: "1px solid #0e1a2e", background: "#080d17", fontSize: 12.5, color: "#5e88c4", lineHeight: 1.55 }}>
-            <span style={{ flexShrink: 0, color: C.accent, fontSize: 13 }}>↗</span>
-            <div><strong style={{ color: "#7a9fd4", fontWeight: 500 }}>Money-saving tip — </strong>{result.money_tip}</div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 7, border: "1px solid #0e1a2e", background: "#080d17", fontSize: 14, color: "#7a9fd4", lineHeight: 1.65 }}>
+            <span style={{ flexShrink: 0, color: C.accent, fontSize: 15 }}>↗</span>
+            <div><strong style={{ color: "#9ab8e0", fontWeight: 500 }}>Money-saving tip — </strong>{result.money_tip}</div>
           </div>
         </div>
       )}
@@ -657,7 +657,7 @@ export default function Home() {
         <h1 style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.1, color: "#fff", margin: "0 0 16px" }}>
           Know what&#39;s changing<br />before it costs you
         </h1>
-        <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.7, margin: "0 auto 40px", maxWidth: 520 }}>
+        <p style={{ fontSize: 15, color: C.textMid, lineHeight: 1.7, margin: "0 auto 40px", maxWidth: 520 }}>
           Enter your export history and get specific, date-accurate intelligence on tariffs, FTA benefits, and compliance gaps — for every shipment.
         </p>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>

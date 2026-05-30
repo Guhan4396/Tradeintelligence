@@ -140,37 +140,40 @@ const C = {
 
 const sInput: React.CSSProperties = {
   width: "100%",
-  background: C.inputBg,
-  border: `1px solid ${C.inputBorder}`,
-  borderRadius: 6,
-  padding: "9px 12px",
-  fontSize: 14,
-  color: C.text,
+  background: "#f8f9fb",
+  border: "1px solid #c8cdd8",
+  borderRadius: 7,
+  padding: "10px 13px",
+  fontSize: 15,
+  fontWeight: 500,
+  color: "#0a0f1e",
   fontFamily: "inherit",
   boxSizing: "border-box",
   outline: "none",
+  boxShadow: "inset 0 2px 4px rgba(0,0,0,0.07), 0 1px 2px rgba(255,255,255,0.9)",
 };
 
 const sLabel: React.CSSProperties = {
   display: "block",
   fontSize: 12,
-  fontWeight: 500,
-  color: C.textMuted,
-  letterSpacing: "0.04em",
+  fontWeight: 700,
+  color: "#374151",
+  letterSpacing: "0.06em",
   textTransform: "uppercase",
-  marginBottom: 6,
+  marginBottom: 7,
 };
 
 const sRunBtn = (disabled: boolean): React.CSSProperties => ({
   width: "100%",
-  background: disabled ? C.inputBorder : C.accent,
+  background: disabled ? "#e5e7eb" : C.accent,
   border: "none",
-  borderRadius: 7,
-  padding: "11px",
-  fontSize: 14,
-  fontWeight: 500,
-  color: disabled ? C.textMuted : "#fff",
+  borderRadius: 8,
+  padding: "13px",
+  fontSize: 15,
+  fontWeight: 600,
+  color: disabled ? "#9ca3af" : "#fff",
   cursor: disabled ? "not-allowed" : "pointer",
+  boxShadow: disabled ? "none" : "0 2px 8px rgba(94,106,210,0.35)",
   fontFamily: "inherit",
   marginTop: 28,
   letterSpacing: "-0.01em",
@@ -192,14 +195,14 @@ function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: 
 
   return (
     <div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>
         Export records
       </div>
 
       {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 6, padding: "0 2px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 8, padding: "0 2px" }}>
         {COL_LABELS.map((h, i) => (
-          <div key={i} style={{ fontSize: 11.5, fontWeight: 500, color: C.textFaint, letterSpacing: "0.04em", textTransform: "uppercase" }}>{h}</div>
+          <div key={i} style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
 
@@ -245,9 +248,9 @@ function Spinner() {
 
 function InfoStrip({ text }: { text: React.ReactNode }) {
   return (
-    <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 10, background: C.cardBg }}>
-      <span style={{ color: C.accent, fontSize: 14, marginTop: 2, flexShrink: 0 }}>↗</span>
-      <div style={{ fontSize: 14, color: C.textMid, lineHeight: 1.65 }}>{text}</div>
+    <div style={{ border: "1px solid #e0e4ef", borderRadius: 10, padding: "14px 18px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 12, background: "#f5f7ff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <span style={{ color: C.accent, fontSize: 16, marginTop: 2, flexShrink: 0 }}>↗</span>
+      <div style={{ fontSize: 14, color: "#1f2937", lineHeight: 1.7, fontWeight: 400 }}>{text}</div>
     </div>
   );
 }
@@ -337,49 +340,49 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
           {/* Per-export rows */}
           {result.exports.map((exp, i) => (
-            <div key={i} style={{ border: `1px solid ${C.inputBorder}`, borderLeftWidth: 3, borderLeftColor: savingBorderColor(exp.potentialSaving), borderRadius: 8, padding: "16px 18px", marginBottom: 10, background: C.cardBg }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>
+            <div key={i} style={{ border: `1px solid #e5e7eb`, borderLeftWidth: 4, borderLeftColor: savingBorderColor(exp.potentialSaving), borderRadius: 10, padding: "20px 22px", marginBottom: 12, background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#0a0f1e", letterSpacing: "-0.02em" }}>
                   {exp.product}{exp.hsn ? ` (${exp.hsn})` : ""} → {exp.country}
                 </div>
-                <span style={{ fontSize: 11.5, color: C.textFaint, whiteSpace: "nowrap", marginLeft: 16 }}>{formatDate(exp.date)}</span>
+                <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 500, whiteSpace: "nowrap", marginLeft: 16 }}>{formatDate(exp.date)}</span>
               </div>
 
-              <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 14 }}>
+              <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 16, padding: "12px 16px", background: "#f9fafb", borderRadius: 8, border: "1px solid #e5e7eb" }}>
                 <div>
-                  <div style={{ fontSize: 11.5, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Exported</div>
-                  <div style={{ fontSize: 14, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.amountExported)}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Exported</div>
+                  <div style={{ fontSize: 15, color: "#111827", fontWeight: 700 }}>{formatRupees(exp.amountExported)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11.5, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Tariff paid</div>
-                  <div style={{ fontSize: 14, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.tariffPaid)}</div>
+                  <div style={{ fontSize: 11, color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Tariff paid</div>
+                  <div style={{ fontSize: 15, color: "#111827", fontWeight: 700 }}>{formatRupees(exp.tariffPaid)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11.5, color: C.green, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>Potential saving</div>
-                  <div style={{ fontSize: 16, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
+                  <div style={{ fontSize: 11, color: C.green, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Potential saving</div>
+                  <div style={{ fontSize: 18, color: C.green, fontWeight: 800 }}>{formatRupees(exp.potentialSaving)}</div>
                 </div>
               </div>
 
               {/* Savings breakdown */}
               {exp.savingsBreakdown?.length > 0 && (
-                <div style={{ background: C.pageBg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px", marginBottom: 12 }}>
+                <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, padding: "12px 16px", marginBottom: 14, boxShadow: "inset 0 1px 3px rgba(0,0,0,0.04)" }}>
                   {exp.savingsBreakdown.map((item, j) => (
-                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? "1px solid #e5e7eb" : "none" }}>
                       <div>
-                        <div style={{ fontSize: 13.5, color: C.textMid, fontWeight: 500 }}>{item.label}</div>
-                        <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{item.basis}</div>
+                        <div style={{ fontSize: 14, color: "#111827", fontWeight: 600 }}>{item.label}</div>
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{item.basis}</div>
                       </div>
-                      <div style={{ fontSize: 13.5, color: C.green, fontWeight: 600, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
+                      <div style={{ fontSize: 15, color: C.green, fontWeight: 700, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
                     </div>
                   ))}
-                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 7, marginTop: 4, borderTop: `1px solid ${C.inputBorder}` }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em" }}>Total</div>
-                    <div style={{ fontSize: 14, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, marginTop: 4, borderTop: "2px solid #e5e7eb" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em" }}>Total</div>
+                    <div style={{ fontSize: 16, color: C.green, fontWeight: 800 }}>{formatRupees(exp.potentialSaving)}</div>
                   </div>
                 </div>
               )}
 
-              <p style={{ fontSize: 13.5, color: C.textMuted, fontStyle: "italic", marginBottom: 10, lineHeight: 1.6 }}>{exp.loophole}</p>
+              <p style={{ fontSize: 14, color: "#374151", fontWeight: 500, fontStyle: "italic", marginBottom: 12, lineHeight: 1.65 }}>{exp.loophole}</p>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#eff6ff", border: `1px solid #bfdbfe`, borderRadius: 6, fontSize: 14, color: "#1e40af", lineHeight: 1.65 }}>
                 <span style={{ flexShrink: 0 }}>↗</span>
                 <span>{exp.fix}</span>
@@ -389,9 +392,9 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
           {result.additionalFindings?.length > 0 && (
             <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Additional findings</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Additional findings</div>
               {result.additionalFindings.map((f, i) => (
-                <div key={i} style={{ fontSize: 14, color: C.textMid, padding: "12px 16px", background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 6, marginBottom: 8, lineHeight: 1.65 }}>{f}</div>
+                <div key={i} style={{ fontSize: 14, color: "#1f2937", fontWeight: 500, padding: "14px 18px", background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, marginBottom: 8, lineHeight: 1.7, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>{f}</div>
               ))}
             </div>
           )}
@@ -558,22 +561,22 @@ function ShipmentCheck() {
           <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 24 }} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Tariff rate</div>
-              <div style={{ fontSize: 22, fontWeight: 600, color: C.red, letterSpacing: "-0.03em" }}>{result.tariff_rate}</div>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "18px 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Tariff rate</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.red, letterSpacing: "-0.03em" }}>{result.tariff_rate}</div>
             </div>
-            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Estimated duty</div>
-              <div style={{ fontSize: 22, fontWeight: 600, color: C.amber, letterSpacing: "-0.03em" }}>{result.estimated_duty}</div>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "18px 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.07)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Estimated duty</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: C.amber, letterSpacing: "-0.03em" }}>{result.estimated_duty}</div>
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Required documents</div>
-            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
               {result.documents?.map((doc, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderBottom: i < result.documents.length - 1 ? `1px solid ${C.border}` : "none", fontSize: 14, color: C.textMid }}>
-                  <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>✓</span>{doc}
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: i < result.documents.length - 1 ? "1px solid #f3f4f6" : "none", fontSize: 14, color: "#111827", fontWeight: 500 }}>
+                  <span style={{ color: C.green, fontSize: 13, fontWeight: 800 }}>✓</span>{doc}
                 </div>
               ))}
             </div>
@@ -678,9 +681,11 @@ export default function Home() {
 
       {/* Body */}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 80px" }}>
-        {tab === "health"   && <HealthCheck company={company} setCompany={setCompany} exportRows={exportRows} setExportRows={setExportRows} />}
-        {tab === "digest"   && <WeeklyDigest />}
-        {tab === "shipment" && <ShipmentCheck />}
+        <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 14, padding: "40px 44px", boxShadow: "0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.05)" }}>
+          {tab === "health"   && <HealthCheck company={company} setCompany={setCompany} exportRows={exportRows} setExportRows={setExportRows} />}
+          {tab === "digest"   && <WeeklyDigest />}
+          {tab === "shipment" && <ShipmentCheck />}
+        </div>
       </main>
     </div>
   );

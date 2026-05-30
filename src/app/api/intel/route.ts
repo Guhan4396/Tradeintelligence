@@ -86,42 +86,48 @@ Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape
 }`;
 }
 
-function buildWeeklyDigestPrompt(company: string, exportRows: UnifiedExportRow[]): string {
-  const rowLines = exportRows
-    .map((r) => `  - ${r.product}${r.hsn ? ` (HSN: ${r.hsn})` : ""} → ${r.country} (reference date: ${r.date})`)
-    .join("\n");
+function buildWeeklyDigestPrompt(query: string): string {
+  const today = new Date().toISOString().slice(0, 10);
 
-  return `You are a trade intelligence analyst specialising in Indian textile exports.
+  return `You are a trade intelligence analyst specialising in Indian textile exports. Today's date is ${today}.
 
-Company: ${company}
+The user wants a current intelligence digest for: "${query}"
 
-Export records to analyse (product → destination, as of the reference date):
-${rowLines}
+Interpret this as one or more product-market combinations. Examples of valid inputs:
+- "cotton T-shirts for USA" → cotton T-shirts exported to USA
+- "wool, USA, UK" → wool products for USA and UK markets
+- "leather for Germany, cotton for UK" → two separate combinations
 
-CRITICAL INSTRUCTION: Only generate digest items that are specifically relevant to one of the product+country+date combinations listed above. Every item must map to a specific product, HSN code (if provided), country, and reference date. Do not surface regulations that came into force after the reference date. Do not include generic items.
+For each relevant product-market combination, generate current intelligence covering what Indian textile exporters need to know RIGHT NOW.
 
-Key regulatory timeline (apply strictly by date):
-- India-UK FTA duty-free: in force from 1 July 2025 ONLY
-- India-UAE CEPA: in force since May 2022
-- India-Australia ECTA: in force from December 2022
-- EU CBAM carbon reporting: applicable from Q1 2026 ONLY
-- US tariff on Indian textiles: ~63.9% effective rate through 2025
-- RoDTEP scheme: ongoing from January 2021
+Current regulatory context as of ${today}:
+- India-UK FTA: ACTIVE since 1 Jul 2025 — zero duty available for qualifying textiles to UK
+- India-UAE CEPA: ACTIVE since May 2022
+- India-Australia ECTA: ACTIVE since Dec 2022
+- EU CBAM Phase 1: ACTIVE from Jan 2026 — embedded carbon reporting now required for EU exports
+- US tariffs on Indian textiles: ~63.9% effective rate, ongoing through 2025-2026
+- RoDTEP scheme: ongoing — exporters should be claiming this rebate
+- India-EU FTA: under negotiation, not yet in force
 
-Return ONLY valid JSON (no markdown fences, no extra text) in exactly this shape:
+Only include items that are:
+1. Relevant to Indian exporters of the specified products to the specified markets
+2. Current as of today (${today}) — not historical
+3. Concrete, specific, and actionable
+
+Return ONLY valid JSON (no markdown fences, no extra text):
 {
   "urgent": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail specific to the product+country>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
+    { "title": "<short headline>", "detail": "<2-3 sentences — what it means and what to do>", "country": "<destination country>", "referenceDate": "${today}", "product": "<product>", "hsn": "<HSN if known, else empty>" }
   ],
   "watch": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
+    { "title": "<short headline>", "detail": "<2-3 sentences>", "country": "<country>", "referenceDate": "${today}", "product": "<product>", "hsn": "" }
   ],
   "opportunities": [
-    { "title": "<short headline>", "detail": "<2-3 sentence detail>", "country": "<country>", "referenceDate": "<YYYY-MM-DD>", "product": "<product name>", "hsn": "<HSN code>" }
+    { "title": "<short headline>", "detail": "<2-3 sentences — specific scheme or rate available now>", "country": "<country>", "referenceDate": "${today}", "product": "<product>", "hsn": "" }
   ]
 }
 
-Include 2-3 items per section. Be concrete, specific, and actionable.`;
+2-3 items per section. Be specific and actionable. Do not invent regulations that do not exist.`;
 }
 
 function buildShipmentPrompt(hsn: string, destination: string, value: string): string {
@@ -156,7 +162,7 @@ async function callClaude(prompt: string, apiKey: string): Promise<string> {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -229,11 +235,8 @@ export async function POST(req: NextRequest) {
       };
       prompt = buildHealthCheckPrompt(company, exportRows);
     } else if (action === "weekly_digest") {
-      const { company, exportRows } = body as {
-        company: string;
-        exportRows: UnifiedExportRow[];
-      };
-      prompt = buildWeeklyDigestPrompt(company, exportRows);
+      const { query } = body as { query: string };
+      prompt = buildWeeklyDigestPrompt(query);
     } else if (action === "shipment_check") {
       const { hsn, destination, value } = body as {
         hsn: string;

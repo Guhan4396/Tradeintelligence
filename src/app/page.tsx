@@ -403,26 +403,20 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
 // ── Feature 2: Weekly Digest ──────────────────────────────────────────────
 
-function WeeklyDigest({ company, exportRows }: { company: string; exportRows: ExportRow[] }) {
+function WeeklyDigest() {
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DigestResult | null>(null);
   const [error, setError] = useState("");
-  const [fallbackMarkets, setFallbackMarkets] = useState("");
 
-  const today = new Date().toISOString().slice(0, 10);
-  const usableRows = exportRows.filter((r) => r.product.trim() && r.country);
-  const hasRows = usableRows.length > 0;
-  const canSubmit = !loading && company.trim() && (hasRows || fallbackMarkets.trim());
+  const canSubmit = !loading && query.trim().length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true); setError(""); setResult(null);
-    const digestRows = hasRows
-      ? usableRows.map((r) => ({ product: r.product, hsn: r.hsn, country: r.country, date: r.date || today }))
-      : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ product: "Textile export", hsn: "", country, date: today }));
     try {
-      const data = await callIntel({ action: "weekly_digest", company, exportRows: digestRows });
+      const data = await callIntel({ action: "weekly_digest", query: query.trim() });
       setResult({
         urgent: Array.isArray(data.urgent) ? data.urgent : [],
         watch: Array.isArray(data.watch) ? data.watch : [],
@@ -438,23 +432,20 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
   type AlertVariant = "warn" | "info" | "green";
   function AlertItem({ item, variant }: { item: DigestItem; variant: AlertVariant }) {
     const cfg = {
-      warn:  { bg: C.amberBg,  border: C.amberBorder, iconColor: C.amber,  textColor: "#8a6a20", strongColor: "#b98a1e", icon: "⚠" },
-      info:  { bg: "#080d17",  border: "#0e1a2e",      iconColor: C.accent, textColor: "#2a4a6e", strongColor: "#5e88c4", icon: "↗" },
-      green: { bg: C.greenBg,  border: C.greenBorder,  iconColor: C.green,  textColor: "#245a24", strongColor: "#3a8a3a", icon: "↑" },
+      warn:  { bg: C.amberBg,  border: C.amberBorder, iconColor: C.amber,  textColor: "#c4973a", strongColor: "#d4a84a", icon: "⚠" },
+      info:  { bg: "#080d17",  border: "#0e1a2e",      iconColor: C.accent, textColor: "#6a9ad4", strongColor: "#8ab8e8", icon: "↗" },
+      green: { bg: C.greenBg,  border: C.greenBorder,  iconColor: C.green,  textColor: "#4aaa4a", strongColor: "#5aca5a", icon: "↑" },
     }[variant];
 
-    const rd = item.referenceDate ? formatDate(item.referenceDate) : "";
-    const tag = [item.product, item.hsn ? `HSN ${item.hsn}` : null, item.country, rd ? `as of ${rd}` : null].filter(Boolean).join(" · ");
+    const tag = [item.product, item.hsn ? `HSN ${item.hsn}` : null, item.country].filter(Boolean).join(" · ");
 
     return (
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 7, border: `1px solid ${cfg.border}`, background: cfg.bg, marginBottom: 8, lineHeight: 1.65 }}>
-        <span style={{ flexShrink: 0, color: cfg.iconColor, fontSize: 15, marginTop: 1 }}>{cfg.icon}</span>
-        <div>
-          <div style={{ fontSize: 14, color: cfg.textColor }}>
-            <strong style={{ color: cfg.strongColor, fontWeight: 500 }}>{item.title} — </strong>
-            {item.detail}
-          </div>
-          {tag && <div style={{ fontSize: 12, color: C.textFaint, marginTop: 6, letterSpacing: "0.02em" }}>{tag}</div>}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "16px 18px", borderRadius: 8, border: `1px solid ${cfg.border}`, background: cfg.bg, marginBottom: 10, lineHeight: 1.7 }}>
+        <span style={{ flexShrink: 0, color: cfg.iconColor, fontSize: 16, marginTop: 2 }}>{cfg.icon}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: cfg.strongColor, marginBottom: 4 }}>{item.title}</div>
+          <div style={{ fontSize: 14, color: cfg.textColor, lineHeight: 1.7 }}>{item.detail}</div>
+          {tag && <div style={{ fontSize: 12, color: C.textFaint, marginTop: 8, letterSpacing: "0.02em" }}>{tag}</div>}
         </div>
       </div>
     );
@@ -462,47 +453,46 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
 
   return (
     <div>
-      <InfoStrip text={<><strong style={{ color: C.textMid }}>Weekly digest:</strong> Regulatory changes, new FTA implementation dates, and tariff shifts relevant to your exact products and markets. Anchored to your export dates.</>} />
-
-      {hasRows ? (
-        <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 14, color: C.textMuted, background: C.cardBg, lineHeight: 1.65 }}>
-          <strong style={{ color: C.textMid, fontWeight: 500 }}>Using your export records:</strong>{" "}
-          {usableRows.map((r) => `${r.product}${r.hsn ? ` (${r.hsn})` : ""} → ${r.country}${r.date ? ` · ${formatDate(r.date)}` : ""}`).join(", ")}
-        </div>
-      ) : (
-        <div style={{ marginBottom: 24 }}>
-          <label style={sLabel}>Export markets</label>
-          <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here.</p>
-          <input style={sInput} placeholder="e.g. UK, USA, Germany" value={fallbackMarkets} onChange={(e) => setFallbackMarkets(e.target.value)} />
-        </div>
-      )}
+      <InfoStrip text={<><strong style={{ color: C.textMid }}>How it works:</strong> Type what you export and where — e.g. <em style={{ color: C.textMid }}>&ldquo;cotton T-shirts for USA, wool for UK&rdquo;</em> — and get current regulatory intelligence specific to those products and markets as of today.</>} />
 
       <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 8 }}>
+          <label style={sLabel}>What are you exporting and where?</label>
+          <textarea
+            style={{ ...sInput, minHeight: 80, resize: "vertical", lineHeight: 1.6, paddingTop: 10 }}
+            placeholder="e.g. cotton T-shirts for USA, wool fabric for UK, leather goods for Germany"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <p style={{ fontSize: 13, color: C.textFaint, marginBottom: 4, lineHeight: 1.5 }}>
+          Use plain English — product names, markets, or both. Comma-separated works too.
+        </p>
         <button type="submit" disabled={!canSubmit} style={sRunBtn(!canSubmit)}>
-          {loading && <Spinner />}{loading ? "Analysing…" : "Generate digest →"}
+          {loading && <Spinner />}{loading ? "Fetching intelligence…" : "Get weekly digest →"}
         </button>
       </form>
 
       {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div style={{ marginTop: 28 }}>
-          <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 24 }} />
+        <div style={{ marginTop: 32 }}>
+          <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 28 }} />
 
           {result.urgent.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: C.amber, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Urgent — act now</div>
               {result.urgent.map((item, i) => <AlertItem key={i} item={item} variant="warn" />)}
             </div>
           )}
           {result.watch.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Watch — monitor closely</div>
               {result.watch.map((item, i) => <AlertItem key={i} item={item} variant="info" />)}
             </div>
           )}
           {result.opportunities.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: C.green, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Opportunities</div>
               {result.opportunities.map((item, i) => <AlertItem key={i} item={item} variant="green" />)}
             </div>
@@ -688,7 +678,7 @@ export default function Home() {
       {/* Body */}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 80px" }}>
         {tab === "health"   && <HealthCheck company={company} setCompany={setCompany} exportRows={exportRows} setExportRows={setExportRows} />}
-        {tab === "digest"   && <WeeklyDigest company={company} exportRows={exportRows} />}
+        {tab === "digest"   && <WeeklyDigest />}
         {tab === "shipment" && <ShipmentCheck />}
       </main>
     </div>

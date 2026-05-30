@@ -112,28 +112,28 @@ function formatRupees(n: unknown): string {
 // ── Design tokens ─────────────────────────────────────────────────────────
 
 const C = {
-  pageBg:      "#08090a",
-  cardBg:      "#0b0c0e",
-  inputBg:     "#0f1011",
-  border:      "#1a1a1c",
-  inputBorder: "#1f2023",
-  text:        "#f0f0f0",
-  textMid:     "#c0c4ce",
-  textMuted:   "#9ca3af",
-  textDim:     "#7a8290",
-  textFaint:   "#6b7280",
-  textGhost:   "#4a5568",
+  pageBg:      "#ffffff",
+  cardBg:      "#f9fafb",
+  inputBg:     "#ffffff",
+  border:      "#e5e7eb",
+  inputBorder: "#d1d5db",
+  text:        "#111827",
+  textMid:     "#374151",
+  textMuted:   "#6b7280",
+  textDim:     "#9ca3af",
+  textFaint:   "#9ca3af",
+  textGhost:   "#d1d5db",
   accent:      "#5e6ad2",
-  accentHover: "#6b77e0",
-  green:       "#22c55e",
-  greenBg:     "#081408",
-  greenBorder: "#0f2a0f",
-  amber:       "#d97706",
-  amberBg:     "#120f03",
-  amberBorder: "#2a2308",
-  red:         "#ef4444",
-  redBg:       "#130808",
-  redBorder:   "#2a1010",
+  accentHover: "#4a57c4",
+  green:       "#16a34a",
+  greenBg:     "#f0fdf4",
+  greenBorder: "#bbf7d0",
+  amber:       "#b45309",
+  amberBg:     "#fffbeb",
+  amberBorder: "#fde68a",
+  red:         "#dc2626",
+  redBg:       "#fef2f2",
+  redBorder:   "#fecaca",
 };
 
 // ── Shared style atoms ────────────────────────────────────────────────────
@@ -321,7 +321,7 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
 
           {/* Total savings */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
-            <div style={{ background: C.cardBg, border: `1px solid ${C.greenBorder}`, borderRadius: 8, padding: "16px 18px" }}>
+            <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: 8, padding: "16px 18px" }}>
               <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Total recoverable savings</div>
               <div style={{ fontSize: 28, fontWeight: 600, color: C.green, letterSpacing: "-0.03em", marginBottom: 2 }}>{formatRupees(result.totalSavings)}</div>
               <div style={{ fontSize: 11.5, color: C.textFaint }}>{result.exports.length} export{result.exports.length !== 1 ? "s" : ""} analysed</div>
@@ -380,7 +380,7 @@ function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
               )}
 
               <p style={{ fontSize: 13.5, color: C.textMuted, fontStyle: "italic", marginBottom: 10, lineHeight: 1.6 }}>{exp.loophole}</p>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#080d17", border: `1px solid #0e1a2e`, borderRadius: 6, fontSize: 14, color: "#7a9fd4", lineHeight: 1.65 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#eff6ff", border: `1px solid #bfdbfe`, borderRadius: 6, fontSize: 14, color: "#1e40af", lineHeight: 1.65 }}>
                 <span style={{ flexShrink: 0 }}>↗</span>
                 <span>{exp.fix}</span>
               </div>
@@ -432,9 +432,9 @@ function WeeklyDigest() {
   type AlertVariant = "warn" | "info" | "green";
   function AlertItem({ item, variant }: { item: DigestItem; variant: AlertVariant }) {
     const cfg = {
-      warn:  { bg: C.amberBg,  border: C.amberBorder, iconColor: C.amber,  textColor: "#c4973a", strongColor: "#d4a84a", icon: "⚠" },
-      info:  { bg: "#080d17",  border: "#0e1a2e",      iconColor: C.accent, textColor: "#6a9ad4", strongColor: "#8ab8e8", icon: "↗" },
-      green: { bg: C.greenBg,  border: C.greenBorder,  iconColor: C.green,  textColor: "#4aaa4a", strongColor: "#5aca5a", icon: "↑" },
+      warn:  { bg: C.amberBg,  border: C.amberBorder, iconColor: C.amber,  textColor: "#92400e", strongColor: "#78350f", icon: "⚠" },
+      info:  { bg: "#eff6ff",  border: "#bfdbfe",      iconColor: C.accent, textColor: "#1e40af", strongColor: "#1d4ed8", icon: "↗" },
+      green: { bg: C.greenBg,  border: C.greenBorder,  iconColor: C.green,  textColor: "#166534", strongColor: "#15803d", icon: "↑" },
     }[variant];
 
     const tag = [item.product, item.hsn ? `HSN ${item.hsn}` : null, item.country].filter(Boolean).join(" · ");
@@ -586,9 +586,9 @@ function ShipmentCheck() {
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 7, border: "1px solid #0e1a2e", background: "#080d17", fontSize: 14, color: "#7a9fd4", lineHeight: 1.65 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", borderRadius: 7, border: "1px solid #bfdbfe", background: "#eff6ff", fontSize: 14, color: "#1e40af", lineHeight: 1.65 }}>
             <span style={{ flexShrink: 0, color: C.accent, fontSize: 15 }}>↗</span>
-            <div><strong style={{ color: "#9ab8e0", fontWeight: 500 }}>Money-saving tip — </strong>{result.money_tip}</div>
+            <div><strong style={{ color: "#1d4ed8", fontWeight: 500 }}>Money-saving tip — </strong>{result.money_tip}</div>
           </div>
         </div>
       )}
@@ -614,26 +614,27 @@ export default function Home() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         input:focus, select:focus { border-color: #5e6ad2 !important; outline: none; }
-        input::placeholder { color: #3d4456; }
+        input::placeholder { color: #9ca3af; }
+        textarea::placeholder { color: #9ca3af; }
         button:hover:not(:disabled) { opacity: 0.85; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
       {/* Nav */}
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", height: 52, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.pageBg, zIndex: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "#fff", letterSpacing: "-0.01em" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: C.text, letterSpacing: "-0.01em" }}>
           <div style={{ width: 18, height: 18, background: "linear-gradient(135deg, #5e6ad2 0%, #8b5cf6 100%)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>T</div>
           TradeIntel
         </div>
         <div style={{ display: "flex", alignItems: "center" }}>
           {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ fontSize: 12.5, color: tab === t.id ? C.text : C.textDim, padding: "6px 12px", borderRadius: 6, cursor: "pointer", background: "none", border: "none", fontFamily: "inherit", transition: "color 0.1s" }}>
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ fontSize: 12.5, color: tab === t.id ? C.text : C.textMuted, padding: "6px 12px", borderRadius: 6, cursor: "pointer", background: "none", border: "none", fontFamily: "inherit", transition: "color 0.1s" }}>
               {t.label}
             </button>
           ))}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button style={{ fontSize: 12.5, color: C.textMuted, background: "none", border: "none", padding: "5px 10px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit" }}>Log in</button>
+          <button style={{ fontSize: 12.5, color: C.textMuted, background: "none", border: `1px solid ${C.border}`, padding: "5px 12px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>Log in</button>
           <button style={{ fontSize: 12.5, fontWeight: 500, color: "#fff", background: C.accent, border: "none", padding: "5px 14px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>Get started</button>
         </div>
       </nav>
@@ -644,7 +645,7 @@ export default function Home() {
           <div style={{ width: 6, height: 6, background: C.accent, borderRadius: "50%" }} />
           Live intelligence — no login required
         </div>
-        <h1 style={{ fontSize: 56, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08, color: "#fff", margin: "0 0 20px" }}>
+        <h1 style={{ fontSize: 56, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08, color: C.text, margin: "0 0 20px" }}>
           Know what&#39;s changing<br />before it costs you
         </h1>
         <p style={{ fontSize: 17, color: C.textMid, lineHeight: 1.7, margin: "0 auto 48px", maxWidth: 600 }}>
@@ -668,7 +669,7 @@ export default function Home() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            style={{ fontSize: 14, fontWeight: tab === t.id ? 500 : 400, color: tab === t.id ? "#fff" : C.textDim, padding: "12px 20px", cursor: "pointer", marginBottom: -1, background: "none", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", fontFamily: "inherit", whiteSpace: "nowrap", transition: "color 0.1s" }}
+            style={{ fontSize: 14, fontWeight: tab === t.id ? 500 : 400, color: tab === t.id ? C.text : C.textMuted, padding: "12px 20px", cursor: "pointer", marginBottom: -1, background: "none", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", fontFamily: "inherit", whiteSpace: "nowrap", transition: "color 0.1s" }}
           >
             {t.label}
           </button>

@@ -624,13 +624,13 @@ export default function Home() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         input:focus, select:focus { border-color: #5e6ad2 !important; outline: none; }
-        input::placeholder { color: #2d2e33; }
+        input::placeholder { color: #3d4456; }
         button:hover:not(:disabled) { opacity: 0.85; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
       {/* Nav */}
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", height: 48, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.pageBg, zIndex: 10 }}>
+      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 40px", height: 52, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.pageBg, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "#fff", letterSpacing: "-0.01em" }}>
           <div style={{ width: 18, height: 18, background: "linear-gradient(135deg, #5e6ad2 0%, #8b5cf6 100%)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>T</div>
           TradeIntel
@@ -649,36 +649,36 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "72px 24px 48px", textAlign: "center" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 500, color: C.textMuted, border: `1px solid ${C.inputBorder}`, padding: "4px 10px", borderRadius: 20, marginBottom: 28, letterSpacing: "0.02em", textTransform: "uppercase" }}>
-          <div style={{ width: 5, height: 5, background: C.accent, borderRadius: "50%" }} />
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "80px 40px 56px", textAlign: "center" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: C.textMuted, border: `1px solid ${C.inputBorder}`, padding: "5px 12px", borderRadius: 20, marginBottom: 32, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          <div style={{ width: 6, height: 6, background: C.accent, borderRadius: "50%" }} />
           Live intelligence — no login required
         </div>
-        <h1 style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.1, color: "#fff", margin: "0 0 16px" }}>
+        <h1 style={{ fontSize: 56, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.08, color: "#fff", margin: "0 0 20px" }}>
           Know what&#39;s changing<br />before it costs you
         </h1>
-        <p style={{ fontSize: 15, color: C.textMid, lineHeight: 1.7, margin: "0 auto 40px", maxWidth: 520 }}>
+        <p style={{ fontSize: 17, color: C.textMid, lineHeight: 1.7, margin: "0 auto 48px", maxWidth: 600 }}>
           Enter your export history and get specific, date-accurate intelligence on tariffs, FTA benefits, and compliance gaps — for every shipment.
         </p>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>
           {[["US tariffs", "63.9%"], ["India–UK FTA live", "Jul 2025"], ["EU CBAM from", "Q1 2026"]].map(([label, val], i, arr) => (
-            <span key={i} style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: C.textDim }}>
+            <span key={i} style={{ display: "flex", alignItems: "center", gap: 24 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: C.textDim }}>
                 {label} <span style={{ color: C.text, fontWeight: 500 }}>{val}</span>
               </span>
-              {i < arr.length - 1 && <span style={{ width: 1, height: 12, background: C.inputBorder, display: "inline-block" }} />}
+              {i < arr.length - 1 && <span style={{ width: 1, height: 14, background: C.inputBorder, display: "inline-block" }} />}
             </span>
           ))}
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ borderBottom: `1px solid ${C.border}`, maxWidth: 760, margin: "0 auto", padding: "0 24px", display: "flex" }}>
+      <div style={{ borderBottom: `1px solid ${C.border}`, maxWidth: 1100, margin: "0 auto", padding: "0 40px", display: "flex" }}>
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            style={{ fontSize: 13, fontWeight: tab === t.id ? 500 : 400, color: tab === t.id ? "#fff" : C.textDim, padding: "10px 16px", cursor: "pointer", marginBottom: -1, background: "none", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", fontFamily: "inherit", whiteSpace: "nowrap", transition: "color 0.1s" }}
+            style={{ fontSize: 14, fontWeight: tab === t.id ? 500 : 400, color: tab === t.id ? "#fff" : C.textDim, padding: "12px 20px", cursor: "pointer", marginBottom: -1, background: "none", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", fontFamily: "inherit", whiteSpace: "nowrap", transition: "color 0.1s" }}
           >
             {t.label}
           </button>
@@ -686,7 +686,7 @@ export default function Home() {
       </div>
 
       {/* Body */}
-      <main style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 40px 80px" }}>
         {tab === "health"   && <HealthCheck company={company} setCompany={setCompany} exportRows={exportRows} setExportRows={setExportRows} />}
         {tab === "digest"   && <WeeklyDigest company={company} exportRows={exportRows} />}
         {tab === "shipment" && <ShipmentCheck />}

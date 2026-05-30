@@ -92,7 +92,6 @@ function formatDate(iso: string) {
   return `${d} ${months[parseInt(m) - 1]} ${y}`;
 }
 
-// Indian-style comma grouping: xx,xx,xxx (last group 3 digits, rest groups of 2)
 function formatRupees(n: unknown): string {
   const rounded = Math.round(Number(n));
   if (isNaN(rounded)) return "₹0";
@@ -113,172 +112,158 @@ function formatRupees(n: unknown): string {
 // ── Design tokens ─────────────────────────────────────────────────────────
 
 const C = {
-  pageBg:     "#0f1117",
-  headerBg:   "#161a24",
-  white:      "#161a24",
-  cardBorder: "#1e2535",
-  ink:        "#e8eaf0",
-  inkMid:     "#c9ccd6",
-  gray:       "#9ca3af",
-  muted:      "#6b7280",
-  inputBg:    "#0f1117",
-  inputBorder:"#2a3142",
-  blue:       "#3b82f6",
-  blueLight:  "#0c1c32",
-  blueBorder: "#2563eb44",
-  green:      "#22c55e",
-  greenLight: "#052e16",
-  greenBorder:"#16a34a44",
-  red:        "#ef4444",
-  redLight:   "#1c1010",
-  amber:      "#eab308",
-  amberLight: "#1c1b10",
-  tabBar:     "#161a24",
+  pageBg:      "#08090a",
+  cardBg:      "#0b0c0e",
+  inputBg:     "#0f1011",
+  border:      "#1a1a1c",
+  inputBorder: "#1f2023",
+  text:        "#e2e2e2",
+  textMid:     "#9ca3af",
+  textMuted:   "#6b7280",
+  textDim:     "#4a4b52",
+  textFaint:   "#3d3e45",
+  textGhost:   "#2d2e33",
+  accent:      "#5e6ad2",
+  accentHover: "#6b77e0",
+  green:       "#22c55e",
+  greenBg:     "#081408",
+  greenBorder: "#0f2a0f",
+  amber:       "#d97706",
+  amberBg:     "#120f03",
+  amberBorder: "#2a2308",
+  red:         "#ef4444",
+  redBg:       "#130808",
+  redBorder:   "#2a1010",
 };
 
-// ── Shared sub-components ─────────────────────────────────────────────────
+// ── Shared style atoms ────────────────────────────────────────────────────
 
-const COL_HEADERS = ["Product / Category", "HSN Code", "Country", "Amount (₹)", "Tariff Paid (₹)", "Date of Export", ""];
-const COL_GRID = "2.2fr 1fr 1.4fr 1.2fr 1.2fr 1.3fr 36px";
+const sInput: React.CSSProperties = {
+  width: "100%",
+  background: C.inputBg,
+  border: `1px solid ${C.inputBorder}`,
+  borderRadius: 6,
+  padding: "8px 12px",
+  fontSize: 13,
+  color: C.text,
+  fontFamily: "inherit",
+  boxSizing: "border-box",
+  outline: "none",
+};
+
+const sLabel: React.CSSProperties = {
+  display: "block",
+  fontSize: 11,
+  fontWeight: 500,
+  color: C.textDim,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  marginBottom: 6,
+};
+
+const sRunBtn = (disabled: boolean): React.CSSProperties => ({
+  width: "100%",
+  background: disabled ? C.inputBorder : C.accent,
+  border: "none",
+  borderRadius: 7,
+  padding: "10px",
+  fontSize: 13,
+  fontWeight: 500,
+  color: disabled ? C.textDim : "#fff",
+  cursor: disabled ? "not-allowed" : "pointer",
+  fontFamily: "inherit",
+  marginTop: 28,
+  letterSpacing: "-0.01em",
+});
+
+// ── Sub-components ────────────────────────────────────────────────────────
+
+const COL_GRID = "2fr 1.2fr 1.2fr 1.4fr 1.4fr 1.4fr 28px";
+const COL_LABELS = ["Product / category", "HSN code", "Country", "Amount (₹)", "Tariff paid (₹)", "Date of export", ""];
 
 function ExportRowsInput({ rows, onChange }: { rows: ExportRow[]; onChange: (r: ExportRow[]) => void }) {
-  function updateRow(id: string, field: keyof ExportRow, value: string) {
+  function update(id: string, field: keyof ExportRow, value: string) {
     onChange(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
   }
-  function removeRow(id: string) {
+  function remove(id: string) {
     if (rows.length === 1) return;
     onChange(rows.filter((r) => r.id !== id));
   }
 
   return (
-    <div style={{ marginBottom: 20 }}>
-      <label style={sLabel}>Export Records</label>
-      <p style={{ fontSize: 13, color: C.gray, marginBottom: 12, marginTop: 4 }}>
-        Each row is one shipment. Enter rupee amounts (e.g. 2500000 for ₹25 lakh).
-      </p>
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>
+        Export records
+      </div>
 
       {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 6 }}>
-        {COL_HEADERS.map((h, i) => (
-          <div key={i} style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>{h}</div>
+      <div style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 6, padding: "0 2px" }}>
+        {COL_LABELS.map((h, i) => (
+          <div key={i} style={{ fontSize: 10.5, fontWeight: 500, color: C.textGhost, letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</div>
         ))}
       </div>
 
       {rows.map((row) => (
         <div key={row.id} style={{ display: "grid", gridTemplateColumns: COL_GRID, gap: 8, marginBottom: 8, alignItems: "center" }}>
-          <input
-            style={sInput}
-            placeholder="e.g. Cotton knitwear"
-            value={row.product}
-            onChange={(e) => updateRow(row.id, "product", e.target.value)}
-          />
-          <input
-            style={sInput}
-            placeholder="e.g. 6109.10"
-            value={row.hsn}
-            onChange={(e) => updateRow(row.id, "hsn", e.target.value)}
-          />
+          <input style={sInput} placeholder="Cotton knitwear" value={row.product} onChange={(e) => update(row.id, "product", e.target.value)} />
+          <input style={sInput} placeholder="6109.10" value={row.hsn} onChange={(e) => update(row.id, "hsn", e.target.value)} />
           <select
             value={row.country}
-            onChange={(e) => updateRow(row.id, "country", e.target.value)}
-            style={{ ...sInput, appearance: "auto" as React.CSSProperties["appearance"] }}
+            onChange={(e) => update(row.id, "country", e.target.value)}
+            style={{ ...sInput, appearance: "none" as React.CSSProperties["appearance"], color: row.country ? C.text : C.textDim, cursor: "pointer" }}
           >
-            <option value="">Select country</option>
+            <option value="">Country</option>
             {MARKETS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
-          <input
-            type="number"
-            min="0"
-            placeholder="e.g. 2500000"
-            value={row.amount}
-            onChange={(e) => updateRow(row.id, "amount", e.target.value)}
-            style={sInput}
-          />
-          <input
-            type="number"
-            min="0"
-            placeholder="e.g. 125000"
-            value={row.tariffPaid}
-            onChange={(e) => updateRow(row.id, "tariffPaid", e.target.value)}
-            style={sInput}
-          />
-          <input
-            type="date"
-            value={row.date}
-            onChange={(e) => updateRow(row.id, "date", e.target.value)}
-            style={sInput}
-          />
+          <input style={sInput} type="number" min="0" placeholder="₹ 25,00,000" value={row.amount} onChange={(e) => update(row.id, "amount", e.target.value)} />
+          <input style={sInput} type="number" min="0" placeholder="₹ 1,25,000" value={row.tariffPaid} onChange={(e) => update(row.id, "tariffPaid", e.target.value)} />
+          <input style={sInput} type="date" value={row.date} onChange={(e) => update(row.id, "date", e.target.value)} />
           <button
-            type="button"
-            onClick={() => removeRow(row.id)}
+            onClick={() => remove(row.id)}
             disabled={rows.length === 1}
-            title="Remove row"
-            style={{
-              border: "none", background: "none",
-              cursor: rows.length === 1 ? "not-allowed" : "pointer",
-              color: rows.length === 1 ? C.muted : C.red,
-              fontSize: 18, fontWeight: 700, lineHeight: 1,
-              opacity: rows.length === 1 ? 0.3 : 1, padding: "4px 6px",
-            }}
-          >
-            ×
-          </button>
+            style={{ background: "none", border: `1px solid ${C.inputBorder}`, borderRadius: 4, width: 24, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: rows.length === 1 ? "not-allowed" : "pointer", color: rows.length === 1 ? C.textGhost : C.textDim, fontSize: 14, padding: 0, fontFamily: "inherit", flexShrink: 0, opacity: rows.length === 1 ? 0.4 : 1 }}
+          >×</button>
         </div>
       ))}
 
       <button
-        type="button"
         onClick={() => onChange([...rows, newRow()])}
-        style={{ background: "none", border: "none", color: C.blue, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "6px 0", marginTop: 4 }}
+        style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: C.accent, cursor: "pointer", padding: "6px 0", marginTop: 4, background: "none", border: "none", fontFamily: "inherit" }}
       >
-        + Add another export
+        + Add shipment
       </button>
+      <p style={{ fontSize: 11.5, color: C.textGhost, marginTop: 6, lineHeight: 1.5 }}>
+        Rupee amounts only — e.g. 2500000 for ₹25 lakh.
+      </p>
     </div>
   );
 }
 
 function Spinner() {
-  return <span style={{ display: "inline-block", width: 16, height: 16, border: `2px solid #ffffff44`, borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", marginRight: 8, verticalAlign: "middle" }} />;
+  return <span style={{ display: "inline-block", width: 13, height: 13, border: `1.5px solid #ffffff33`, borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", marginRight: 7, verticalAlign: "middle" }} />;
 }
 
-function ErrorBox({ message }: { message: string }) {
+function InfoStrip({ text }: { text: React.ReactNode }) {
   return (
-    <div style={{ marginTop: 20, backgroundColor: C.redLight, border: `1px solid #fca5a5`, borderRadius: 10, padding: "14px 18px", color: C.red, fontSize: 14 }}>
-      {message} — please try again.
+    <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 10, background: C.cardBg }}>
+      <span style={{ color: C.accent, fontSize: 13, marginTop: 1, flexShrink: 0 }}>↗</span>
+      <div style={{ fontSize: 12.5, color: C.textDim, lineHeight: 1.6 }}>{text}</div>
     </div>
   );
 }
 
-// ── Shared style atoms ────────────────────────────────────────────────────
-
-const sLabel: React.CSSProperties = {
-  display: "block", fontSize: 11, fontWeight: 700, color: C.muted,
-  textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8,
-};
-
-const sInput: React.CSSProperties = {
-  width: "100%", backgroundColor: C.inputBg, border: `1px solid ${C.inputBorder}`,
-  borderRadius: 8, padding: "10px 12px", fontSize: 14, color: C.ink,
-  outline: "none", boxSizing: "border-box",
-};
-
-const sCard: React.CSSProperties = {
-  backgroundColor: C.white, border: `1px solid ${C.cardBorder}`,
-  borderRadius: 16, padding: 32,
-};
-
-const sSubmitBtn = (disabled: boolean): React.CSSProperties => ({
-  width: "100%", backgroundColor: disabled ? C.inputBorder : C.ink,
-  color: disabled ? C.muted : C.white, border: "none", borderRadius: 10,
-  padding: "13px 24px", fontSize: 15, fontWeight: 700,
-  cursor: disabled ? "not-allowed" : "pointer", marginTop: 16,
-});
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 7, border: `1px solid ${C.redBorder}`, background: C.redBg, marginTop: 20, fontSize: 12.5, color: "#9b3a3a", lineHeight: 1.55 }}>
+      <span style={{ flexShrink: 0, color: C.red, fontSize: 13 }}>⚠</span>
+      <div>{message}</div>
+    </div>
+  );
+}
 
 // ── Feature 1: Health Check ───────────────────────────────────────────────
 
-function HealthCheck({
-  company, setCompany, exportRows, setExportRows,
-}: {
+function HealthCheck({ company, setCompany, exportRows, setExportRows }: {
   company: string; setCompany: (v: string) => void;
   exportRows: ExportRow[]; setExportRows: (r: ExportRow[]) => void;
 }) {
@@ -307,104 +292,106 @@ function HealthCheck({
     }
   }
 
-  const savingColor = (saving: number) => {
-    if (saving > 500000) return C.green;
-    if (saving > 0) return C.amber;
-    return C.muted;
-  };
+  const savingBorderColor = (n: number) => n > 500000 ? C.green : n > 0 ? C.amber : C.inputBorder;
 
   return (
-    <div style={sCard}>
-      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Export Health Check</h2>
-      <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>
-        Enter your export records and we&apos;ll show exactly where money was left on the table — based on the rules in force on each shipment date.
-      </p>
+    <div>
+      <InfoStrip text={<><strong style={{ color: C.textMid }}>How it works:</strong> Each row is one shipment. We apply the rules in force on that exact date — FTA preferences, anti-dumping duties, scheme eligibility — and surface the gap between what you paid and what was available.</>} />
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 20 }}>
-          <label style={sLabel}>Company Name</label>
+          <label style={sLabel}>Company name</label>
           <input style={sInput} placeholder="e.g. Sri Murugan Exports Pvt Ltd" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
 
+        <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "24px 0" }} />
+
         <ExportRowsInput rows={exportRows} onChange={setExportRows} />
 
-        <button type="submit" disabled={!canSubmit || loading} style={sSubmitBtn(!canSubmit || loading)}>
-          {loading && <Spinner />}{loading ? "Analysing…" : "Run Health Check"}
+        <button type="submit" disabled={!canSubmit || loading} style={sRunBtn(!canSubmit || loading)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Run health check →"}
         </button>
       </form>
 
-      {error && <ErrorBox message={error} />}
+      {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
-          {/* Hero savings */}
-          <div style={{ backgroundColor: C.greenLight, border: `1px solid ${C.greenBorder}`, borderRadius: 12, padding: "20px 24px", textAlign: "center", marginBottom: 28 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.green, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Total Recoverable Savings</div>
-            <div style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 700, color: C.green, letterSpacing: "-0.5px" }}>{formatRupees(result.totalSavings)}</div>
-            <div style={{ fontSize: 13, color: C.gray, marginTop: 6 }}>Across {result.exports.length} export{result.exports.length !== 1 ? "s" : ""} analysed</div>
+        <div style={{ marginTop: 32 }}>
+          <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 28 }} />
+
+          {/* Total savings */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 28 }}>
+            <div style={{ background: C.cardBg, border: `1px solid ${C.greenBorder}`, borderRadius: 8, padding: "16px 18px" }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Total recoverable savings</div>
+              <div style={{ fontSize: 28, fontWeight: 600, color: C.green, letterSpacing: "-0.03em", marginBottom: 2 }}>{formatRupees(result.totalSavings)}</div>
+              <div style={{ fontSize: 11.5, color: C.textFaint }}>{result.exports.length} export{result.exports.length !== 1 ? "s" : ""} analysed</div>
+            </div>
+            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "16px 18px" }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Savings opportunities</div>
+              <div style={{ fontSize: 28, fontWeight: 600, color: C.text, letterSpacing: "-0.03em", marginBottom: 2 }}>
+                {result.exports.filter(e => e.potentialSaving > 0).length}
+              </div>
+              <div style={{ fontSize: 11.5, color: C.textFaint }}>shipments with recoverable duty</div>
+            </div>
           </div>
 
-          {/* Per-export cards */}
+          {/* Per-export rows */}
           {result.exports.map((exp, i) => (
-            <div key={i} style={{ borderLeft: `4px solid ${savingColor(exp.potentialSaving)}`, backgroundColor: C.white, border: `1px solid ${C.cardBorder}`, borderLeftWidth: 4, borderLeftColor: savingColor(exp.potentialSaving), borderRadius: 10, padding: "18px 20px", marginBottom: 12 }}>
+            <div key={i} style={{ border: `1px solid ${C.inputBorder}`, borderLeftWidth: 3, borderLeftColor: savingBorderColor(exp.potentialSaving), borderRadius: 8, padding: "16px 18px", marginBottom: 10, background: C.cardBg }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div style={{ fontFamily: "Georgia, serif", fontSize: 16, fontWeight: 700, color: C.ink }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: C.text, letterSpacing: "-0.01em" }}>
                   {exp.product}{exp.hsn ? ` (${exp.hsn})` : ""} → {exp.country}
                 </div>
-                <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap", marginLeft: 12 }}>{formatDate(exp.date)}</span>
+                <span style={{ fontSize: 11.5, color: C.textFaint, whiteSpace: "nowrap", marginLeft: 16 }}>{formatDate(exp.date)}</span>
               </div>
 
-              {/* Summary figures */}
-              <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 14 }}>
+              <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Exported</div>
-                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{formatRupees(exp.amountExported)}</div>
+                  <div style={{ fontSize: 10.5, color: C.textFaint, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Exported</div>
+                  <div style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.amountExported)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Tariff Paid</div>
-                  <div style={{ fontSize: 14, color: C.inkMid, fontWeight: 600 }}>{formatRupees(exp.tariffPaid)}</div>
+                  <div style={{ fontSize: 10.5, color: C.textFaint, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Tariff paid</div>
+                  <div style={{ fontSize: 13, color: C.textMid, fontWeight: 500 }}>{formatRupees(exp.tariffPaid)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: C.green, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Potential Saving</div>
-                  <div style={{ fontSize: 16, color: C.green, fontWeight: 700 }}>{formatRupees(exp.potentialSaving)}</div>
+                  <div style={{ fontSize: 10.5, color: C.green, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Potential saving</div>
+                  <div style={{ fontSize: 15, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
                 </div>
               </div>
 
               {/* Savings breakdown */}
               {exp.savingsBreakdown?.length > 0 && (
-                <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "12px 14px", marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 8 }}>Savings Breakdown</div>
+                <div style={{ background: C.pageBg, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px", marginBottom: 12 }}>
                   {exp.savingsBreakdown.map((item, j) => (
-                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.cardBorder}` : "none" }}>
+                    <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "5px 0", borderBottom: j < exp.savingsBreakdown.length - 1 ? `1px solid ${C.border}` : "none" }}>
                       <div>
-                        <div style={{ fontSize: 13, color: C.inkMid, fontWeight: 600 }}>{item.label}</div>
-                        <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{item.basis}</div>
+                        <div style={{ fontSize: 12.5, color: C.textMid, fontWeight: 500 }}>{item.label}</div>
+                        <div style={{ fontSize: 11, color: C.textFaint, marginTop: 1 }}>{item.basis}</div>
                       </div>
-                      <div style={{ fontSize: 13, color: C.green, fontWeight: 700, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
+                      <div style={{ fontSize: 12.5, color: C.green, fontWeight: 600, marginLeft: 16, whiteSpace: "nowrap" }}>{formatRupees(item.amount)}</div>
                     </div>
                   ))}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, marginTop: 4, borderTop: `1px solid ${C.inputBorder}` }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.4px" }}>Total</div>
-                    <div style={{ fontSize: 14, color: C.green, fontWeight: 700 }}>{formatRupees(exp.potentialSaving)}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 7, marginTop: 4, borderTop: `1px solid ${C.inputBorder}` }}>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em" }}>Total</div>
+                    <div style={{ fontSize: 13, color: C.green, fontWeight: 600 }}>{formatRupees(exp.potentialSaving)}</div>
                   </div>
                 </div>
               )}
 
-              <p style={{ fontSize: 13, color: C.gray, fontStyle: "italic", marginBottom: 10 }}>{exp.loophole}</p>
-              <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: C.blue }}>
-                → {exp.fix}
+              <p style={{ fontSize: 12.5, color: C.textDim, fontStyle: "italic", marginBottom: 10, lineHeight: 1.55 }}>{exp.loophole}</p>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", background: "#080d17", border: `1px solid #0e1a2e`, borderRadius: 6, fontSize: 12.5, color: "#5e88c4", lineHeight: 1.55 }}>
+                <span style={{ flexShrink: 0 }}>↗</span>
+                <span>{exp.fix}</span>
               </div>
             </div>
           ))}
 
-          {/* Additional findings */}
           {result.additionalFindings?.length > 0 && (
             <div style={{ marginTop: 20 }}>
-              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 16, color: C.ink, marginBottom: 12 }}>Additional Findings</h3>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Additional findings</div>
               {result.additionalFindings.map((f, i) => (
-                <div key={i} style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "12px 16px", fontSize: 14, color: C.inkMid, marginBottom: 8 }}>
-                  {f}
-                </div>
+                <div key={i} style={{ fontSize: 12.5, color: C.textDim, padding: "10px 14px", background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 6, marginBottom: 8, lineHeight: 1.6 }}>{f}</div>
               ))}
             </div>
           )}
@@ -423,21 +410,17 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
   const [fallbackMarkets, setFallbackMarkets] = useState("");
 
   const today = new Date().toISOString().slice(0, 10);
-
   const usableRows = exportRows.filter((r) => r.product.trim() && r.country);
   const hasRows = usableRows.length > 0;
-
   const canSubmit = !loading && company.trim() && (hasRows || fallbackMarkets.trim());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     setLoading(true); setError(""); setResult(null);
-
     const digestRows = hasRows
       ? usableRows.map((r) => ({ product: r.product, hsn: r.hsn, country: r.country, date: r.date || today }))
       : fallbackMarkets.split(",").map((m) => m.trim()).filter(Boolean).map((country) => ({ product: "Textile export", hsn: "", country, date: today }));
-
     try {
       const data = await callIntel({ action: "weekly_digest", company, exportRows: digestRows });
       setResult({
@@ -452,86 +435,85 @@ function WeeklyDigest({ company, exportRows }: { company: string; exportRows: Ex
     }
   }
 
-  function DigestSection({ type, label, items }: { type: "urgent" | "watch" | "opportunities"; label: string; items: DigestItem[] }) {
-    const config = {
-      urgent:        { border: C.red,   bg: C.redLight,   textColor: C.red },
-      watch:         { border: C.amber, bg: C.amberLight, textColor: C.amber },
-      opportunities: { border: C.green, bg: C.greenLight, textColor: C.green },
-    };
-    const c = config[type];
+  type AlertVariant = "warn" | "info" | "green";
+  function AlertItem({ item, variant }: { item: DigestItem; variant: AlertVariant }) {
+    const cfg = {
+      warn:  { bg: C.amberBg,  border: C.amberBorder, iconColor: C.amber,  textColor: "#8a6a20", strongColor: "#b98a1e", icon: "⚠" },
+      info:  { bg: "#080d17",  border: "#0e1a2e",      iconColor: C.accent, textColor: "#2a4a6e", strongColor: "#5e88c4", icon: "↗" },
+      green: { bg: C.greenBg,  border: C.greenBorder,  iconColor: C.green,  textColor: "#245a24", strongColor: "#3a8a3a", icon: "↑" },
+    }[variant];
+
+    const rd = item.referenceDate ? formatDate(item.referenceDate) : "";
+    const tag = [item.product, item.hsn ? `HSN ${item.hsn}` : null, item.country, rd ? `as of ${rd}` : null].filter(Boolean).join(" · ");
 
     return (
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: c.textColor, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12 }}>{label}</div>
-        {items.length === 0 ? (
-          <div style={{ fontSize: 13, color: C.muted, fontStyle: "italic", padding: "10px 0" }}>Nothing to flag this week for your markets.</div>
-        ) : (
-          items.map((item, i) => {
-            const rd = item.referenceDate ? formatDate(item.referenceDate) : "";
-            const tagParts = [
-              item.product,
-              item.hsn ? `HSN ${item.hsn}` : null,
-              item.country,
-              rd ? `as of ${rd}` : null,
-            ].filter(Boolean).join(" · ");
-            return (
-              <div key={i} style={{ borderLeft: `3px solid ${c.border}`, backgroundColor: c.bg, borderRadius: "0 10px 10px 0", padding: "14px 18px", marginBottom: 10 }}>
-                <div style={{ fontFamily: "Georgia, serif", fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 6 }}>{item.title}</div>
-                <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 500 }}>{tagParts}</div>
-                <div style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.6 }}>{item.detail}</div>
-              </div>
-            );
-          })
-        )}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 7, border: `1px solid ${cfg.border}`, background: cfg.bg, marginBottom: 8, lineHeight: 1.55 }}>
+        <span style={{ flexShrink: 0, color: cfg.iconColor, fontSize: 13, marginTop: 1 }}>{cfg.icon}</span>
+        <div>
+          <div style={{ fontSize: 12.5, color: cfg.textColor }}>
+            <strong style={{ color: cfg.strongColor, fontWeight: 500 }}>{item.title} — </strong>
+            {item.detail}
+          </div>
+          {tag && <div style={{ fontSize: 10.5, color: C.textGhost, marginTop: 5, letterSpacing: "0.02em" }}>{tag}</div>}
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={sCard}>
-      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Weekly Intelligence Digest</h2>
-      <p style={{ fontSize: 14, color: C.gray, marginBottom: 24 }}>
-        Personalised to your products and markets — anchored to your export dates.
-      </p>
+    <div>
+      <InfoStrip text={<><strong style={{ color: C.textMid }}>Weekly digest:</strong> Regulatory changes, new FTA implementation dates, and tariff shifts relevant to your exact products and markets. Anchored to your export dates.</>} />
 
       {hasRows ? (
-        <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "12px 16px", marginBottom: 24, fontSize: 13, color: C.blue }}>
-          <strong>Using your export records:</strong>{" "}
+        <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 24, fontSize: 12.5, color: C.textDim, background: C.cardBg, lineHeight: 1.6 }}>
+          <strong style={{ color: C.textMid, fontWeight: 500 }}>Using your export records:</strong>{" "}
           {usableRows.map((r) => `${r.product}${r.hsn ? ` (${r.hsn})` : ""} → ${r.country}${r.date ? ` · ${formatDate(r.date)}` : ""}`).join(", ")}
         </div>
       ) : (
-        <div style={{ marginBottom: 20 }}>
-          <label style={sLabel}>Export Markets</label>
-          <p style={{ fontSize: 12, color: C.gray, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here for a general digest.</p>
-          <input
-            style={sInput}
-            placeholder="e.g. UK, USA, Germany"
-            value={fallbackMarkets}
-            onChange={(e) => setFallbackMarkets(e.target.value)}
-          />
+        <div style={{ marginBottom: 24 }}>
+          <label style={sLabel}>Export markets</label>
+          <p style={{ fontSize: 11.5, color: C.textGhost, marginBottom: 8 }}>Fill in the Health Check tab for product-specific results, or enter markets here.</p>
+          <input style={sInput} placeholder="e.g. UK, USA, Germany" value={fallbackMarkets} onChange={(e) => setFallbackMarkets(e.target.value)} />
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <button type="submit" disabled={!canSubmit} style={sSubmitBtn(!canSubmit)}>
-          {loading && <Spinner />}{loading ? "Analysing…" : "Generate Digest"}
+        <button type="submit" disabled={!canSubmit} style={sRunBtn(!canSubmit)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Generate digest →"}
         </button>
       </form>
 
-      {error && <ErrorBox message={error} />}
+      {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
-          <DigestSection type="urgent"        label="Urgent — Act Now"        items={result.urgent} />
-          <DigestSection type="watch"         label="Watch — Monitor Closely" items={result.watch} />
-          <DigestSection type="opportunities" label="Opportunities"           items={result.opportunities} />
+        <div style={{ marginTop: 28 }}>
+          <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 24 }} />
+
+          {result.urgent.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.amber, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Urgent — act now</div>
+              {result.urgent.map((item, i) => <AlertItem key={i} item={item} variant="warn" />)}
+            </div>
+          )}
+          {result.watch.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.accent, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Watch — monitor closely</div>
+              {result.watch.map((item, i) => <AlertItem key={i} item={item} variant="info" />)}
+            </div>
+          )}
+          {result.opportunities.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.green, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Opportunities</div>
+              {result.opportunities.map((item, i) => <AlertItem key={i} item={item} variant="green" />)}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-// ── Feature 3: Shipment Check (unchanged) ────────────────────────────────
+// ── Feature 3: Shipment Check ─────────────────────────────────────────────
 
 function ShipmentCheck() {
   const [hsn, setHsn] = useState("");
@@ -556,68 +538,67 @@ function ShipmentCheck() {
   }
 
   return (
-    <div style={sCard}>
-      <h2 style={{ fontFamily: "Georgia, serif", fontSize: 22, color: C.ink, marginBottom: 6 }}>Shipment Check</h2>
-      <p style={{ fontSize: 14, color: C.gray, marginBottom: 28 }}>
-        Before your shipment leaves — check tariff rate, duty, required documents, and one tip to save money.
-      </p>
+    <div>
+      <InfoStrip text={<><strong style={{ color: C.textMid }}>Pre-shipment check:</strong> Enter the shipment you&#39;re planning and we&#39;ll flag every compliance requirement, documentation gap, and duty optimisation before it leaves the port.</>} />
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <div>
-            <label style={sLabel}>HSN Code</label>
+            <label style={sLabel}>HSN code</label>
             <input style={sInput} placeholder="e.g. 6109" value={hsn} onChange={(e) => setHsn(e.target.value)} />
           </div>
           <div>
-            <label style={sLabel}>Destination Country</label>
+            <label style={sLabel}>Destination</label>
             <input style={sInput} placeholder="e.g. United States" value={destination} onChange={(e) => setDestination(e.target.value)} />
           </div>
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={sLabel}>Shipment Value</label>
+        <div style={{ marginBottom: 4 }}>
+          <label style={sLabel}>Shipment value (₹ or $)</label>
           <input style={sInput} placeholder="e.g. $50,000 or ₹40 lakh" value={value} onChange={(e) => setValue(e.target.value)} />
         </div>
-        <button type="submit" disabled={!hsn || !destination || !value || loading} style={sSubmitBtn(!hsn || !destination || !value || loading)}>
-          {loading && <Spinner />}{loading ? "Analysing…" : "Check Shipment"}
+        <button type="submit" disabled={!hsn || !destination || !value || loading} style={sRunBtn(!hsn || !destination || !value || loading)}>
+          {loading && <Spinner />}{loading ? "Analysing…" : "Check shipment compliance →"}
         </button>
       </form>
 
-      {error && <ErrorBox message={error} />}
+      {error && <ErrorBanner message={error} />}
 
       {result && (
-        <div style={{ marginTop: 32, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 28 }}>
+        <div style={{ marginTop: 28 }}>
+          <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, marginBottom: 24 }} />
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-            <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ ...sLabel, marginBottom: 4 }}>Tariff Rate</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.red }}>{result.tariff_rate}</div>
+            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Tariff rate</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: C.red, letterSpacing: "-0.03em" }}>{result.tariff_rate}</div>
             </div>
-            <div style={{ backgroundColor: C.inputBg, border: `1px solid ${C.cardBorder}`, borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ ...sLabel, marginBottom: 4 }}>Estimated Duty</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.amber }}>{result.estimated_duty}</div>
+            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "14px 16px" }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Estimated duty</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: C.amber, letterSpacing: "-0.03em" }}>{result.estimated_duty}</div>
             </div>
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={sLabel}>Required Documents</label>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Required documents</div>
+            <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
               {result.documents?.map((doc, i) => (
-                <li key={i} style={{ padding: "8px 0", borderBottom: `1px solid ${C.cardBorder}`, fontSize: 14, color: C.inkMid, display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ color: C.green, fontSize: 12, fontWeight: 700 }}>✓</span>{doc}
-                </li>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderBottom: i < result.documents.length - 1 ? `1px solid ${C.border}` : "none", fontSize: 13, color: C.textMid }}>
+                  <span style={{ color: C.green, fontSize: 11, fontWeight: 700 }}>✓</span>{doc}
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
           {result.port_issues && (
             <div style={{ marginBottom: 16 }}>
-              <label style={sLabel}>Port &amp; Customs Notes</label>
-              <div style={{ fontSize: 14, color: C.gray }}>{result.port_issues}</div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: C.textFaint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Port &amp; customs notes</div>
+              <div style={{ fontSize: 12.5, color: C.textDim, lineHeight: 1.6 }}>{result.port_issues}</div>
             </div>
           )}
 
-          <div style={{ backgroundColor: C.blueLight, border: `1px solid ${C.blueBorder}`, borderRadius: 10, padding: "16px 20px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Money-Saving Tip</div>
-            <div style={{ fontSize: 14, color: C.inkMid }}>{result.money_tip}</div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 14px", borderRadius: 7, border: "1px solid #0e1a2e", background: "#080d17", fontSize: 12.5, color: "#5e88c4", lineHeight: 1.55 }}>
+            <span style={{ flexShrink: 0, color: C.accent, fontSize: 13 }}>↗</span>
+            <div><strong style={{ color: "#7a9fd4", fontWeight: 500 }}>Money-saving tip — </strong>{result.money_tip}</div>
           </div>
         </div>
       )}
@@ -632,60 +613,82 @@ export default function Home() {
   const [company, setCompany] = useState("");
   const [exportRows, setExportRows] = useState<ExportRow[]>([newRow()]);
 
+  const tabs = [
+    { id: "health",   label: "Export Health Check" },
+    { id: "digest",   label: "Weekly Digest" },
+    { id: "shipment", label: "Shipment Check" },
+  ] as const;
+
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: C.pageBg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: 1.6 }}>
+    <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, sans-serif", fontSize: 14, lineHeight: 1.6, color: C.text }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input:focus, select:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important; outline: none; }
-        button:hover:not(:disabled) { opacity: 0.88; }
+        input:focus, select:focus { border-color: #5e6ad2 !important; outline: none; }
+        input::placeholder { color: #2d2e33; }
+        button:hover:not(:disabled) { opacity: 0.85; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
       `}</style>
 
-      {/* Header */}
-      <header style={{ backgroundColor: C.headerBg, height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px" }}>
-        <div style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, color: C.ink }}>
-          Trade<span style={{ color: "#60a5fa" }}>Intel</span>
+      {/* Nav */}
+      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", height: 48, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, background: C.pageBg, zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, color: "#fff", letterSpacing: "-0.01em" }}>
+          <div style={{ width: 18, height: 18, background: "linear-gradient(135deg, #5e6ad2 0%, #8b5cf6 100%)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff", flexShrink: 0 }}>T</div>
+          TradeIntel
         </div>
-        <div style={{ fontSize: 13, color: "#a8a29e" }}>Trade intelligence for Indian textile exporters</div>
-      </header>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {tabs.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ fontSize: 12.5, color: tab === t.id ? C.text : C.textDim, padding: "6px 12px", borderRadius: 6, cursor: "pointer", background: "none", border: "none", fontFamily: "inherit", transition: "color 0.1s" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button style={{ fontSize: 12.5, color: C.textMuted, background: "none", border: "none", padding: "5px 10px", borderRadius: 5, cursor: "pointer", fontFamily: "inherit" }}>Log in</button>
+          <button style={{ fontSize: 12.5, fontWeight: 500, color: "#fff", background: C.accent, border: "none", padding: "5px 14px", borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>Get started</button>
+        </div>
+      </nav>
 
       {/* Hero */}
-      <div style={{ textAlign: "center", padding: "52px 24px 40px", maxWidth: 680, margin: "0 auto" }}>
-        <div style={{ display: "inline-block", backgroundColor: C.blueLight, color: C.blue, border: `1px solid ${C.blueBorder}`, borderRadius: 20, padding: "5px 16px", fontSize: 12, fontWeight: 600, letterSpacing: "0.3px", marginBottom: 20 }}>
-          Live Intelligence · No Login Required
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "72px 24px 48px", textAlign: "center" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 500, color: C.textMuted, border: `1px solid ${C.inputBorder}`, padding: "4px 10px", borderRadius: 20, marginBottom: 28, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          <div style={{ width: 5, height: 5, background: C.accent, borderRadius: "50%" }} />
+          Live intelligence — no login required
         </div>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: 40, fontWeight: 700, color: C.ink, lineHeight: 1.2, letterSpacing: "-0.5px", marginBottom: 16 }}>
-          Know what&apos;s changing before<br />it costs you money
+        <h1 style={{ fontSize: 42, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.1, color: "#fff", margin: "0 0 16px" }}>
+          Know what&#39;s changing<br />before it costs you
         </h1>
-        <p style={{ fontSize: 17, color: C.gray, maxWidth: 520, margin: "0 auto" }}>
-          US tariffs at 63.9% · India-UK FTA live from July 2025 · EU CBAM from Q1 2026 — enter your export history and get specific, date-accurate intelligence.
+        <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.7, margin: "0 auto 40px", maxWidth: 520 }}>
+          Enter your export history and get specific, date-accurate intelligence on tariffs, FTA benefits, and compliance gaps — for every shipment.
         </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+          {[["US tariffs", "63.9%"], ["India–UK FTA live", "Jul 2025"], ["EU CBAM from", "Q1 2026"]].map(([label, val], i, arr) => (
+            <span key={i} style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: C.textDim }}>
+                {label} <span style={{ color: C.text, fontWeight: 500 }}>{val}</span>
+              </span>
+              {i < arr.length - 1 && <span style={{ width: 1, height: 12, background: C.inputBorder, display: "inline-block" }} />}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Main */}
-      <main style={{ maxWidth: 1060, margin: "0 auto", padding: "0 24px 80px" }}>
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 28, backgroundColor: C.tabBar, padding: 5, borderRadius: 12 }}>
-          {(["health", "digest", "shipment"] as const).map((t) => {
-            const labels = { health: "Health Check", digest: "Weekly Digest", shipment: "Shipment Check" };
-            const active = tab === t;
-            return (
-              <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600, backgroundColor: active ? C.white : "transparent", color: active ? C.ink : C.muted, boxShadow: active ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s" }}>
-                {labels[t]}
-              </button>
-            );
-          })}
-        </div>
+      {/* Tabs */}
+      <div style={{ borderBottom: `1px solid ${C.border}`, maxWidth: 760, margin: "0 auto", padding: "0 24px", display: "flex" }}>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            style={{ fontSize: 13, fontWeight: tab === t.id ? 500 : 400, color: tab === t.id ? "#fff" : C.textDim, padding: "10px 16px", cursor: "pointer", marginBottom: -1, background: "none", border: "none", borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent", fontFamily: "inherit", whiteSpace: "nowrap", transition: "color 0.1s" }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-        {tab === "health" && (
-          <HealthCheck
-            company={company} setCompany={setCompany}
-            exportRows={exportRows} setExportRows={setExportRows}
-          />
-        )}
-        {tab === "digest" && (
-          <WeeklyDigest company={company} exportRows={exportRows} />
-        )}
+      {/* Body */}
+      <main style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
+        {tab === "health"   && <HealthCheck company={company} setCompany={setCompany} exportRows={exportRows} setExportRows={setExportRows} />}
+        {tab === "digest"   && <WeeklyDigest company={company} exportRows={exportRows} />}
         {tab === "shipment" && <ShipmentCheck />}
       </main>
     </div>
